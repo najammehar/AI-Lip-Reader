@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply bg-[#0a0a0a] text-white antialiased m-0 p-0;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+  
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+}
+
+@layer components {
+  .glass-effect {
+    @apply bg-[#111111]/80 backdrop-blur-sm border border-[#1f1f1f];
+  }
+  
+  .glow-effect {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+  }
+  
+  .text-gradient {
+    @apply bg-linear-to-r from-[#6366f1] to-[#8b5cf6] bg-clip-text text-transparent;
+  }
+}
