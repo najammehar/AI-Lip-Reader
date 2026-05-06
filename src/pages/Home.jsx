@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Eye, Video, Zap, Shield, Globe, Play, BookOpen } from 'lucide-react';
+import { ArrowRight, Eye, Video, Zap, Globe, Play, BookOpen } from 'lucide-react';
 import Button from '../components/Button';
 import Card from '../components/Card';
 
@@ -8,57 +8,57 @@ const Home = () => {
   const features = [
     {
       icon: Video,
-      title: 'Video Analysis',
-      description: 'Advanced AI processes video frames to understand lip movements and generate accurate text transcriptions.',
+      title: 'Appearance Stream',
+      description: 'An MC3D frontend paired with a ResNet-18 backbone extracts rich spatiotemporal visual features directly from grayscale video frames.',
       gradient: 'from-indigo-500 to-purple-500',
     },
     {
-      icon: Zap,
-      title: 'Real-time Processing',
-      description: 'Get results in seconds with our optimized neural network architecture trained on thousands of samples.',
+      icon: Eye,
+      title: 'Landmark Stream',
+      description: 'MediaPipe FaceMesh tracks 50 facial landmarks per frame (40 lip + 10 chin), normalized and modeled with an MLP-Transformer-BiLSTM pipeline.',
       gradient: 'from-purple-500 to-pink-500',
     },
     {
-      icon: Shield,
-      title: 'Privacy First',
-      description: 'All processing happens securely. Your videos are never stored and privacy is our top priority.',
+      icon: Zap,
+      title: 'Dual-Stream Fusion',
+      description: 'Features from both streams are fused using concatenation or cross-attention, letting geometric cues support appearance-based recognition.',
       gradient: 'from-pink-500 to-red-500',
     },
     {
       icon: Globe,
-      title: 'Universal Access',
-      description: 'Helping deaf and hard-of-hearing communities, enabling communication in noisy environments.',
+      title: 'Broad Benchmarking',
+      description: 'Evaluated on LRW (500-word, word-level) and LRS2 (sentence-level, open vocabulary) to validate both component contributions and real-world generalization.',
       gradient: 'from-red-500 to-orange-500',
     },
   ];
 
   const stats = [
-    { value: '10K+', label: 'Videos Processed', icon: Video },
-    { value: '92%', label: 'Accuracy Rate', icon: Zap },
-    { value: '50+', label: 'Languages Ready', icon: Globe },
-    { value: '2.1s', label: 'Avg Processing', icon: Eye },
+    { value: '50', label: 'Landmarks per Frame', icon: Eye },
+    { value: '2', label: 'Benchmark Datasets', icon: Globe },
+    { value: '19+', label: 'Experiments Run', icon: Zap },
+    { value: '29', label: 'Frames per Clip', icon: Video },
   ];
 
   const useCases = [
     {
       title: 'Accessibility Support',
-      description: 'Enable real-time subtitles for deaf and hard-of-hearing individuals in meetings, lectures, and daily conversations.',
+      description: 'Enable real-time subtitles for deaf and hard-of-hearing individuals in meetings, lectures, and daily conversations without requiring an audio signal.',
       image: '📱',
     },
     {
       title: 'Noisy Environments',
-      description: 'Perfect for construction sites, concerts, or busy public spaces where audio is unclear or unavailable.',
+      description: 'Understand speech in construction sites, public spaces, or any setting where background noise makes audio unreliable or unavailable.',
       image: '🎧',
     },
     {
-      title: 'Security & Surveillance',
-      description: 'Extract conversation content from silent CCTV footage for investigation and analysis purposes.',
-      image: '🔒',
+      title: 'Education & Research',
+      description: 'Study speech patterns, phoneme visibility, and articulation dynamics — with applications in linguistics, language learning, and communication disorders.',
+      image: '🎓',
     },
     {
-      title: 'Education & Research',
-      description: 'Study speech patterns, language learning, and communication disorders with detailed lip movement analysis.',
-      image: '🎓',
+      title: 'Human-Computer Interaction',
+      description: 'Enable silent command interfaces for devices, opening new interaction modalities where audio input is impractical or unwanted.',
+      image: '🖥️',
     },
   ];
 
@@ -77,17 +77,17 @@ const Home = () => {
               transition={{ duration: 0.8 }}
             >
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full mb-6">
-                <span className="text-sm font-medium text-indigo-300">AI-Powered Lip Reading</span>
+                <span className="text-sm font-medium text-indigo-300">Dual-Stream Visual Speech Recognition</span>
               </div>
 
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-                Turn Silence Into
-                <span className="block text-gradient mt-2">Spoken Words</span>
+                Lip Reading with
+                <span className="block text-gradient mt-2">Geometric Fusion</span>
               </h1>
 
               <p className="text-xl text-gray-400 mb-8 leading-relaxed max-w-xl">
-                Our advanced AI reads lips from videos and generates accurate text transcriptions. 
-                Making communication accessible to everyone, everywhere.
+                A research system that combines facial landmark geometry with deep visual features 
+                to understand speech from silent video — no audio required.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
@@ -106,16 +106,16 @@ const Home = () => {
               {/* Quick Stats */}
               <div className="grid grid-cols-3 gap-6">
                 <div>
-                  <div className="text-3xl font-bold text-white mb-1">92%</div>
-                  <div className="text-sm text-gray-400">Accuracy</div>
+                  <div className="text-3xl font-bold text-white mb-1">Dual</div>
+                  <div className="text-sm text-gray-400">Stream Fusion</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-white mb-1">2.1s</div>
-                  <div className="text-sm text-gray-400">Processing</div>
+                  <div className="text-3xl font-bold text-white mb-1">50</div>
+                  <div className="text-sm text-gray-400">Lip Landmarks</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-white mb-1">10K+</div>
-                  <div className="text-sm text-gray-400">Videos</div>
+                  <div className="text-3xl font-bold text-white mb-1">LRW</div>
+                  <div className="text-sm text-gray-400">+ LRS2 Datasets</div>
                 </div>
               </div>
             </motion.div>
@@ -205,10 +205,10 @@ const Home = () => {
             className="text-center mb-16"
           >
             <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Powerful Features
+              System Architecture
             </h2>
             <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-              Advanced AI technology making lip reading accessible and accurate
+              Two complementary streams, each trained to capture a different facet of lip motion
             </p>
           </motion.div>
 
@@ -247,8 +247,8 @@ const Home = () => {
                 See It In Action
               </h2>
               <p className="text-xl text-gray-400 mb-8 leading-relaxed">
-                Upload any video with visible lip movements and watch our AI generate accurate 
-                text transcriptions in real-time. Try it yourself with our interactive demo.
+                Upload a short video clip to explore the landmark extraction and word prediction 
+                pipeline. The demo illustrates the preprocessing and inference steps of the research prototype.
               </p>
               
               <div className="space-y-4 mb-8">
@@ -258,7 +258,7 @@ const Home = () => {
                   </div>
                   <div>
                     <div className="font-semibold mb-1">Upload Your Video</div>
-                    <div className="text-sm text-gray-400">Support for MP4, MOV, AVI formats</div>
+                    <div className="text-sm text-gray-400">MP4, MOV or AVI — frontal face, clear lip visibility</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -266,8 +266,8 @@ const Home = () => {
                     <div className="w-2 h-2 rounded-full bg-purple-500" />
                   </div>
                   <div>
-                    <div className="font-semibold mb-1">AI Processing</div>
-                    <div className="text-sm text-gray-400">Advanced neural network analysis</div>
+                    <div className="font-semibold mb-1">Landmark Extraction & Feature Processing</div>
+                    <div className="text-sm text-gray-400">50 facial landmarks detected per frame, visual features extracted in parallel</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -275,8 +275,8 @@ const Home = () => {
                     <div className="w-2 h-2 rounded-full bg-pink-500" />
                   </div>
                   <div>
-                    <div className="font-semibold mb-1">Get Results</div>
-                    <div className="text-sm text-gray-400">Accurate text transcription output</div>
+                    <div className="font-semibold mb-1">Word Prediction</div>
+                    <div className="text-sm text-gray-400">Dual-stream inference produces a ranked prediction</div>
                   </div>
                 </div>
               </div>
@@ -357,10 +357,10 @@ const Home = () => {
               <div className="absolute inset-0 bg-linear-to-br from-indigo-500/10 via-purple-500/10 to-pink-500/10" />
               <div className="relative z-10 py-8">
                 <h2 className="text-4xl md:text-5xl font-bold mb-4">
-                  Ready to Get Started?
+                  Explore the Research
                 </h2>
                 <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
-                  Experience the future of communication. Try our lip reading AI today.
+                  Try the demo, read the full research article, or explore the architecture behind the system.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Link to="/demo">

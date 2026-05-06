@@ -1,0 +1,133 @@
+Aim: To create a dual stream architecture for visual lip reading. The architecture is inspired by Wu et al's paper on VSR using landmarks. We take a dual stream approach to justify two key hypothesis: geometric features contain enough information to provide a helpful signal, and using landmarks as a support to 3D CNN models helps accuracy. 
+
+What we need:
+LRW (word-level, controlled)
+├── Appearance-only baseline
+├── Landmark-only baseline        ← we have this (42%)
+├── Dual-stream fusion result
+└── Ablation: each component's contribution
+
+LRS2 (sentence-level, open vocabulary)
+├── Appearance-only baseline
+├── Dual-stream fusion result
+└── Comparison to published WER numbers
+
+What we've done:
+
+- EDA on LRW: We used CMUdict for evaluating the 500 word dataset and used a phoneme visibility score. CMUdict returns phonemes of each word, which we assign a lip visibility score to. Each words visibility score is the mean of all phoneme scores. We also evaluate a transition count, which rewards words with distinct and varied mouth movements. A phoneme score is then calculated using visibility score * (1+ transition count). A final score is computed using the original score (num of clips x avg duration) multiplied by the phoneme score. In summary, final_score = num_clips × avg_duration × visibility_score × (1 + transition_count). 
+
+We applied k means on the scoring to find two naturally forming clusters on the training split, using features weighted towards the phoneme dimensions, one of words providing high linguistic info and the other without. We chose 100 of the cluster 0 words. 
+
+- Preprocessing of LRW-100: We extract 50 landmarks using MediaPipe FaceMesh (40 lip, 10 chin). Each frame is normalized by being centered (subtract mean of all landmarks) and scaled (divide by mouth width determined by farthest left and right landmakrs). All clips are forced at 29 frames by either truncating or zero padding. Each clip is transformed into (29,50,3) numpy array.
+
+
+- Experiment 1: Validate that facial landmarks (without any RGB data) contain enough geometric info to allow word - level lip reading. 
+
+Pipeline: 
+150 input dims, 4 layer, 4 attn heads, 256 output dims. Trained for 40 epochs on LRW-100, no MLP or BiLSTM, Linear classifier, 3.2M params. Results in 61.64% best val accuracy, final train accuracy 74.54%, ~13% gap.
+
+- Experiment 2: Establish MLP + Temporal Mean polling only baseline. 
+
+Pipeline:
+150 input dims, MLP (applied to each frame, Lin 150->256, ReLU, Dropout 0.3, Lin 256->256, ReLU), Temporal Pooling as mean accross 29 frames (B,256 output), Linear classifier. 130k params, AdamW optimizer, for 40 epochs. Results in only 4.48% best val acc with 5.71% final train acc. Assuming issue was different temporal sequences having same mean vector (no motion direction), shallow arch, LR too aggressive (1e-4)
+
+- Experiment 3: Same as exp 002 with a deeper MLP.
+
+Pipeline:
+150 input dims, MLP (applied to each frame, Lin 150->512, ReLU, Dropout 0.3, Lin 512->512, ReLU, Dropout 0.3, Lin 512->512, ReLU, Dropout 0.3, Lin 512->256, ReLU), Temporal Pooling as mean accross 29 frames (B,256 output), Linear classifier. 580k params. AdamW optimizer for 40 epochs. 6.06% best val with 7.47% accuracy.
+
+- Experiment 4: Lighter MLP w/ BiLSTM to add temporal modeling. Is temporal modeling more valuable than depth?
+
+Pipeline: 
+150 input dim, MLP (applied to each frame, Lin 150->256, ReLU, Dropout 0.3, Lin 256->256, ReLU), LSTM (256 input, 2 layers, 256 hidden size, bidirectional). 2.25M params. Same 40 epochs w AdamW. Results in 43.96% best val with 45.97% training val. Not converged yet, proves lip reading is inherently sequential. 
+
+- Experiment 5: Transformer + BiLSTM for joint spatial temporal learning. 
+
+Pipeline:
+150 input dims, Linear projection to 256 dims, PE, Transformer (4 layer, 8 heads), BiLSTM (1 layer, bidir), MLP classifier (512 -> 256 -> 100). 2.5M params, 40 epochs w AdamW. Results in 0.82%, early stop triggered. Architecture flaw confirmed, linear projection is too shallow.
+
+- Experiment 6: MLP + Transformer + BiLSTM. Need for better feature extraction. 
+
+Pipeline:
+150 input dim, MLP (applied to each frame, Lin 150->256, ReLU, Dropout 0.3, Lin 256->256, ReLU), Transformer (1 layer, 4 heads, FFN 256->512->256), BiLSTM (256 input, 2 layers, 256 hidden size, bidirectional), Classifier (512 -> 100). 2.5 M params. Had invalid val split so rerun. Training session 2 with proper val split returns 61.58% best val with 71.83% final train. This is our primary baseline. 
+
+- Experiment 7: Same arch as exp 006 with data augmentation. Reduce overfitting and improve speed. 
+
+Same as before, 0.4 dropout instead, with flip, crop, noise and scale. 2.5 M params as well. 43.2% best val with 35.08% final train acc. Augmentation too aggressive.
+
+- Experiment 8: Same arch as exp 006,007, with gentle augmentation. 54.58% val acc with 55.13% train acc. Proves landmarks are too semantically dense for augmentation to be useful.
+
+- Experiment 9: Same arch as exp 006, no augmentation, but twice the transformer layers. Maybe depth helps?
+
+Pipeline:
+150 input dim, MLP (applied to each frame, Lin 150->256, ReLU, Dropout 0.3, Lin 256->256, ReLU), Transformer Layer 1 (4 heads, FFN 256->512->256),
+Transformer Layer 2 (4 heads, FFN 256->512->256), BiLSTM (256 input, 2 layers, 256 hidden size, bidirectional), Classifier (512 -> 100). 3M parameters. Results in best val of 60.14% over 40 epochs, 71.99% final train acc. Additional capacity adds overfitting with only marginal val accuracy gain. 
+
+- Experiment 10: Increased epochs to check true convergence ceiling. 
+
+Pipeline: 
+Same as exp 009, just 80 epochs instead of 40. 62.66% best val with 78.34% final train accuracy. Early stopped at epoch 54. This is our primary ceiling. 
+
+- Experiment 11: 3 Layer transformer with 80 eps.
+
+Pipeline:
+150 input dim, MLP (applied to each frame, Lin 150->256, ReLU, Dropout 0.3, Lin 256->256, ReLU), Transformer Layer 1 (4 heads, FFN 256->512->256),
+Transformer Layer 2 (4 heads, FFN 256->512->256),
+Transformer Layer 3 (4 heads, FFN 256->512->256), BiLSTM (256 input, 2 layers, 256 hidden size, bidirectional), Classifier (512 -> 100). 3.5 M params (probably). 62.66% best val with 87.18% final train. Additional layer cost not justified.
+
+- Experiment 12: 2L Transformer + PE, 50 epochs. Determine whether positional info absence is the ceiling cause.
+
+Pipeline:
+150 input dim, MLP (applied to each frame, Lin 150->256, ReLU, Dropout 0.3, Lin 256->256, ReLU),
+Positional Encoding 256 dim, Transformer Layer 1 (4 heads, FFN 256->512->256),
+Transformer Layer 2 (4 heads, FFN 256->512->256), BiLSTM (256 input, 2 layers, 256 hidden size, bidirectional), Classifier (512 -> 100). Results in 53.08% best val with 60.27% train acc. Not converged at 49.
+
+- Experiment 13: Widen dimensions - maybe 256 is the issue. 
+
+Pipeline:
+150 input dim, MLP (applied to each frame, Lin 150->512->512->256->256, ReLU, Dropout 0.3, Lin 256->256, ReLU),
+Positional Encoding 256 dim, Transformer Layer 1 (4 heads, FFN 256->512->256),
+Transformer Layer 2 (4 heads, FFN 256->512->256), BiLSTM (256 input, 2 layers, 256 hidden size, bidirectional), Classifier (512 -> 100). 16.4M parameters, approx 4 times exp 10. Session crash at epoch 23 but 60.04% best val with 89.74% best train. Tracking the same ceiling with worse overfitting, indicated 62% ceiling again. 
+
+- Experiment 14: Maybe better regularisation helps? Same arch as exp 14 with dropout 0.4. Best val 59.92% with train at 97.42%. 8/15 patience at epoch 50. Overfitting widened
+
+- Experiment 15: First run  with LRW-500 (full). Warm start on exp 10 model. 
+
+Pipeline:
+150 input dim, MLP (applied to each frame, Lin 150->256, ReLU, Dropout 0.3, Lin 256->256, ReLU), Transformer Layer 1 (4 heads, FFN 256->512->256),
+Transformer Layer 2 (4 heads, FFN 256->512->256), BiLSTM (256 input, 2 layers, 256 hidden size, bidirectional), Classifier (512 -> 500). 3M parameters, 60 epochs, 3 for warmup (phase A with backbone frozen). Plateus at epoch 56 with 42.95% best val and 67.60% training accuracy. Assuming issue was warm start, model tries to map 100 word learning to 500 words. Note that the 100 words were chosen for being hard.
+
+- Experiment 16: Landmark-Only Baseline. This model was retrained and achieved a final test accuracy of **40.84%**. This serves as our official landmark-only baseline.
+
+- Experiment 17: Confusion matrix made for exp 010. No label map was found so not very useful. Keeping in mind it was for exp 10, looked good (BOTTOM 20 — hardest words
+  Word                     Acc   Correct   Total
+  ----------------------------------------------
+  21                     28.0%        14      50
+  7                      34.0%        17      50
+  72                     36.0%        18      50
+  85                     38.0%        19      50
+  57                     40.0%        20      50)
+
+- Experiment 18: Full LRW training from scratch - 500 words, 80 epochs. Reached 41.78% with best val, 62.58% train acc, 20 ep patience reached. Confusion matrix shows words like billion and million most confused. Also, around 110 words had near zero accuracy (like about, across, action, child, children, conference). Short, common words with few phonemes and visual ambiguity, mostly near neighbours. This seems to be a hard vocab size limit and shows an important distinction in what landmark features are capable of.
+
+- Experiment 19: Appearance-Only Baseline (3D CNN + BiLSTM). This model achieved a final test accuracy of **74.30%**. This serves as our official appearance-only baseline.
+
+Hardware and Training Environment:
+- All models were trained on Google Cloud Platform (GCP) using NVIDIA L4 GPUs.
+
+Next Steps:
+- Feature Extraction: Extract features from both the landmark-only baseline (Experiment 16) and the appearance-only baseline (Experiment 19) before their final classification layers.
+- Fusion Layer Design: Design and implement a fusion layer to combine the features from the two streams. We are exploring several approaches:
+    - Simple concatenation followed by an MLP.
+    - Cross-attention, where features from one stream attend to the other.
+    - Multi-head attention, treating the two feature sets as a sequence.
+- Classifier: Add a final classifier after the fusion layer to produce the word prediction.
+
+Findings:
+- Architecture Agnosticism of Landmarks: The landmark-only models consistently hit a performance ceiling of around 41-42% test accuracy on LRW-500, regardless of the specific architecture used (ViT, MLP+Transformer+BiLSTM ablations). This suggests the limitation is inherent to the landmark features themselves, not the model design.
+- Correlated Difficulty: Both the appearance-only and landmark-only models struggle with a similar set of visually ambiguous words (e.g., "billion" vs. "million"). This implies that a "smart" fusion mechanism is required, as simple fusion might not resolve these shared ambiguities.
+- Warm-Start Ineffectiveness: Warm-starting the LRW-500 model from an LRW-100 checkpoint did not provide a significant performance boost. The model trained on the smaller, harder 100-word subset seemed to learn biases that did not generalize well to the full 500-word vocabulary. Training from scratch proved more effective.
+
+
+----------- NOTES:
+- VIT and arch exp 6 onwards present two different architectures. The ViT uses landmarks as a spatial set with no mlp or bilstm with 61.64% accuracy. Exp006 onwards flattens the landmarks per frame into a 150 dim vector per frame, thereby losing all spatial relationships, forcing MLP to learn a projection of the concatenated coordinates. The latter results in 62.66% accuracy. Both have fundamentally different inductive biases, resulting in the hypothesis that the cieling is a property of the features. Also supports the idea that the ceiling is robust across architectural choices. 

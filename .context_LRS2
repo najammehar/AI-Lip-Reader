@@ -1,0 +1,244 @@
+# Dual-Stream Visual Speech Recognition
+### A Geometric + Appearance Fusion Architecture for Lip Reading
+
+---
+
+## Overview
+
+This project develops a **dual-stream architecture for Visual Speech Recognition (VSR)**, inspired by Wu et al.'s work on landmark-based VSR. The core hypothesis is twofold:
+
+1. **Geometric features alone** (facial landmarks) contain sufficient information to provide a meaningful signal for lip reading
+2. **Fusing landmarks with a 3D CNN appearance stream** improves accuracy beyond either stream in isolation
+
+The system is evaluated on two benchmarks:
+- **LRW** (word-level, controlled vocabulary) — for ablation and component validation
+- **LRS2** (sentence-level, open vocabulary) — for comparison against published WER numbers
+
+---
+
+## Repository Structure
+
+```
+├── lrw/
+│   ├── experiments/          # All 18 landmark stream experiments (LRW-100 and LRW-500)
+│   ├── eda/                  # CMUdict phoneme scoring and k-means clustering
+│   └── preprocessing/        # MediaPipe FaceMesh landmark extraction
+├── lrs2/
+│   ├── dataset.py            # LRS2Dataset with curriculum filtering and augmentation
+│   ├── model_v1.py           # Appearance stream: Custom 3D CNN + BiLSTM
+│   ├── model_v2.py           # Appearance stream: MC3D Frontend + ResNet18 + BiLSTM
+│   └── train.py              # CTC training loop with smart resume and circuit breaker
+├── fusion/                   # Dual-stream fusion architecture (in progress)
+└── checkpoints/              # Saved model weights (Google Drive)
+```
+
+---
+
+## Stream 1 — Landmark Stream (LRW, Complete)
+
+### Dataset Preparation
+
+A custom scoring pipeline was applied to the full LRW-500 dataset to identify the 100 most linguistically informative words for efficient early experimentation (LRW-100).
+
+**Scoring Formula:**
+```
+final_score = num_clips × avg_duration × visibility_score × (1 + transition_count)
+```
+
+- **Phoneme visibility score**: Assigned per phoneme using CMUdict, averaged across all phonemes in a word
+- **Transition count**: Rewards words with distinct, varied mouth movements
+- **K-means clustering**: Applied to the scored dataset (features weighted toward phoneme dimensions) to find two naturally forming clusters; 100 words selected from the high-information cluster
+
+### Preprocessing
+
+- **Landmark extractor**: MediaPipe FaceMesh — 40 lip landmarks + 10 chin landmarks = **50 landmarks per frame**
+- **Normalisation**: Centered by subtracting mean of all landmarks; scaled by dividing by mouth width (distance between leftmost and rightmost landmarks)
+- **Temporal normalisation**: All clips forced to exactly **29 frames** via truncation or zero-padding
+- **Output shape**: `(29, 50, 3)` NumPy array per clip
+
+### Experiments Summary
+
+| Exp | Architecture | Dataset | Best Val Acc | Train Acc | Notes |
+|-----|-------------|---------|-------------|-----------|-------|
+| 01 | ViT (4L, 4H, 256d) — no MLP/BiLSTM | LRW-100 | 61.64% | 74.54% | Spatial landmark set, no flattening |
+| 02 | MLP + Temporal Mean Pool | LRW-100 | 4.48% | 5.71% | No temporal direction in mean pool |
+| 03 | Deeper MLP + Temporal Mean Pool | LRW-100 | 6.06% | 7.47% | Same pooling failure |
+| 04 | MLP + BiLSTM | LRW-100 | 43.96% | 45.97% | Proves sequential modelling is essential |
+| 05 | Linear Proj + Transformer + BiLSTM | LRW-100 | 0.82% | — | Linear projection too shallow; early stop |
+| 06 | **MLP + Transformer (1L) + BiLSTM** | LRW-100 | **61.58%** | 71.83% | **Primary baseline** |
+| 07 | Same as 06 + aggressive augmentation | LRW-100 | 43.20% | 35.08% | Augmentation too aggressive for landmarks |
+| 08 | Same as 06 + gentle augmentation | LRW-100 | 54.58% | 55.13% | Landmarks too dense for augmentation |
+| 09 | MLP + Transformer (2L) + BiLSTM | LRW-100 | 60.14% | 71.99% | Marginal gain, more overfitting |
+| 10 | Same as 09, 80 epochs | LRW-100 | **62.66%** | 78.34% | **Primary ceiling; early stopped ep 54** |
+| 11 | MLP + Transformer (3L) + BiLSTM, 80 ep | LRW-100 | 62.66% | 87.18% | Extra layer not justified |
+| 12 | 2L Transformer + PE, 50 ep | LRW-100 | 53.08% | 60.27% | PE hurt performance; not converged |
+| 13 | Wider MLP + 2L Transformer + BiLSTM | LRW-100 | 60.04% | 89.74% | 16.4M params; same ceiling, worse overfit |
+| 14 | Same as 13, dropout 0.4 | LRW-100 | 59.92% | 97.42% | Overfitting widened |
+| 15 | Warm start from exp 10 → 500 words | LRW-500 | 42.95% | 67.60% | Warm start from 100-word model hurts |
+| 16 | Same as 15, increased dropout | LRW-500 | 41.86% | 56.57% | Healthier train/val gap |
+| 17 | Confusion matrix analysis (exp 10) | LRW-100 | — | — | Bottom-20 words identified |
+| 18 | Full scratch training, 80 ep | LRW-500 | 41.78% | 62.58% | ~110 words near-zero acc; hard vocab limit |
+
+### Key Findings — Landmark Stream
+
+- **62.66% appears to be a robust ceiling** across radically different architectures (ViT spatial at 61.64% vs flattened MLP+Transformer at 62.66%), suggesting the ceiling is a **property of the features**, not the architecture
+- **Sequential modelling is essential**: mean pooling achieves <7%; BiLSTM brings this to 44% (Exp 04)
+- **Landmarks are too semantically dense for augmentation**: geometric perturbations destroy the signal rather than regularising
+- **Hard vocabulary limit at LRW-500**: ~110 short, visually ambiguous words (e.g. *about*, *across*, *action*) achieve near-zero accuracy — these represent a fundamental limit of what geometric features can distinguish
+
+---
+
+## Stream 2 — Appearance Stream (LRS2, In Progress)
+
+### Dataset
+
+**LRS2 Pretrain subset** with curriculum learning: clips filtered to transcripts ≤50 characters for initial training, gradually relaxing the limit as the model converges.
+
+### Preprocessing & Augmentation
+
+- Frames converted to **grayscale**, resized to `96×96`
+- **Normalisation**: `(pixel - 0.4161) / 0.1688` (zero-mean standardisation)
+- **Training augmentation**:
+  - Random spatial crop: `100×100` → `96×96`
+  - Random horizontal flip (50% probability)
+- **Inference**: centre-cropped directly to `96×96`, no flip
+- **Dynamic padding**: Variable-length sequences padded to batch maximum via `pad_collate`
+
+### Character Vocabulary
+
+```
+A–Z + 0–9 + Space + Apostrophe = 38 characters
++ 1 CTC blank token (index 0)
+= 39 total classes
+```
+
+### Model Version 1 — Custom 3D CNN + BiLSTM
+
+A lightweight custom spatiotemporal frontend feeding a 2-layer BiLSTM.
+
+```
+Input [B, T, 1, 96, 96]
+  └─ Conv3D(1→32, k=3×5×5) + BN + ReLU + MaxPool3D
+  └─ Conv3D(32→64, k=3×5×5) + BN + ReLU + MaxPool3D
+  └─ Conv3D(64→96, k=3×3×3) + BN + ReLU + MaxPool3D
+  └─ Linear(96×6×6 → 256)
+  └─ BiLSTM(256, 2 layers, hidden=256)
+  └─ Linear(512 → 39)
+```
+
+**Result**: Plateaued at val loss ~2.98 after 120 epochs. Identified as an architecture capacity ceiling — the 3-layer frontend cannot represent complex spatiotemporal lip motion patterns regardless of training duration or learning rate.
+
+### Model Version 2 — MC3D Frontend + ResNet18 + BiLSTM *(Current)*
+
+Replacing the custom CNN with the standard research frontend (MC3D) and a pretrained ResNet18 applied per-frame, matching the approach used in competitive LRS2 published work.
+
+```
+Input [B, T, 1, 96, 96]
+  └─ MC3D Frontend:
+       Conv3D(1→64, k=5×7×7, stride=1×2×2) + BN + ReLU
+       MaxPool3D(k=1×3×3, stride=1×2×2)
+       → [B, 64, T, 24, 24]
+  └─ ResNet18 (pretrained ImageNet, per-frame):
+       conv1 replaced: Conv2D(64→64, k=3×3, no stride)
+       maxpool removed (preserves 24×24 spatial resolution)
+       layers 1–4 → [B×T, 512, 3, 3]
+       AdaptiveAvgPool → [B, T, 512]
+  └─ BiLSTM(512, 2 layers, hidden=256, dropout=0.3)
+  └─ Linear(512 → 39)
+```
+
+**Key changes over V1:**
+- Single heavy Conv3D (MC3D standard) replaces 3 lightweight convolutions
+- 18-layer ResNet with residual connections replaces 3 plain conv layers — fundamentally different representational capacity
+- Pretrained ImageNet weights provide a strong initialisation for visual feature extraction
+- LSTM input size updated 256 → 512 to match ResNet output
+- Dropout added to BiLSTM to counteract ResNet's stronger feature extraction on short pretrain clips
+
+### Training Configuration
+
+```python
+optimizer     = AdamW
+start_lr      = 1e-3          # Fresh ResNet run
+scheduler     = ReduceLROnPlateau(factor=0.5, patience=4)
+ctc_loss      = CTCLoss(blank=0, zero_infinity=True)
+batch_size    = 2             # Colab T4 constraint
+accumulation  = 8 steps       # Effective batch size = 16
+max_frames    = 400           # GPU memory guard
+loss_ceiling  = 1000.0        # Skip catastrophic batches only
+```
+
+**Alignment guard** (prevents CTC numerical explosion):
+```python
+if vid_lengths[j] < target_lengths[j] * 2 + 10:
+    skip batch
+```
+
+**Smart resume system**: Supports `"latest"` (crash recovery), `"best"` (curriculum jump), and `"none"` (fresh start) modes with configurable LR override and optimizer momentum reset.
+
+### LRS2 Training Progress
+
+| Phase | Architecture | Epochs | Best Val Loss | Notes |
+|-------|-------------|--------|--------------|-------|
+| Pretrain (≤50 chars) | Custom 3D CNN | 120 | 2.98 | Architecture ceiling confirmed |
+| Pretrain (≤50 chars) | MC3D + ResNet18 | 100 | **2.74** | Plateaued  |
+| Pretrain (full, no limit) | MC3D + ResNet18 | 30+ | **2.72** | Still decreasing |
+| Fine-tune on LRS2 Main | MC3D + ResNet18 | — | Planned | LR reset to 1e-4, optimizer wiped |
+
+---
+
+## Planned Next Steps
+
+### 1. Complete LRS2 Appearance Baseline
+- Finish fine-tuning MC3D + ResNet18 on LRS2 Main
+- Evaluate CER and WER against published benchmarks
+- Run greedy decode analysis to confirm character-level learning
+
+### 2. Replace BiLSTM with Transformer (Appearance Stream)
+- Swap the 2-layer BiLSTM for a Transformer encoder in the appearance stream
+- Compare CER/WER directly against BiLSTM version
+- Evaluate whether self-attention better captures long-range lip coarticulation than recurrence
+
+### 3. Dual-Stream Fusion
+- Combine the landmark stream (MLP + Transformer + BiLSTM, exp 06 architecture) with the appearance stream (MC3D + ResNet18)
+- Fusion strategies to evaluate: early concatenation, late fusion, cross-attention
+- Primary evaluation on LRW (word-level) for controlled ablation, then LRS2 (sentence-level)
+
+### Ablation Plan (LRW)
+
+| Condition | Purpose |
+|-----------|---------|
+| Appearance only | Baseline: what does RGB give us? |
+| Landmark only | Already done: 62.66% (exp 10) |
+| Dual-stream fusion | Primary result |
+| Each component masked | Contribution of each stream |
+
+---
+
+## Dependencies
+
+```
+torch
+torchvision
+opencv-python
+mediapipe
+decord==0.6.0
+jiwer
+tqdm
+numpy
+matplotlib
+pandas
+```
+
+---
+
+## Key Design Decisions & Rationale
+
+| Decision | Rationale |
+|----------|-----------|
+| CTC loss over cross-entropy | Handles variable-length sequences without forced alignment |
+| Curriculum learning (short clips first) | Stabilises early CTC training; avoids blank collapse |
+| Grayscale input | Lip shape is carried in structure, not colour; reduces memory |
+| MC3D frontend over custom 3D CNN | Matches published LRS2 architecture standard; proven capacity |
+| Per-frame ResNet18 over full 3D ResNet | Memory efficient on T4; provides comparable representational power |
+| 50 landmarks (40 lip + 10 chin) | Chin landmarks capture jaw drop — a key articulation signal often missed |
+| No augmentation on landmark stream | Landmarks are too semantically dense; perturbations destroy signal |
