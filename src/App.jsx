@@ -5,11 +5,13 @@ import Footer from './components/Footer';
 import Home from './pages/Home';
 import Demo from './pages/Demo';
 import Article from './pages/Article';
+import ScrollToTop from './components/ScrollToTop';
 import './App.css';
 
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <div className="min-h-screen bg-[#0a0a0a] flex flex-col">
         <Navbar />
         <main className="flex-1">

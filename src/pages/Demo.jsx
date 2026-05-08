@@ -1,15 +1,36 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, CheckCircle2, AlertCircle, Loader2, BarChart3 } from 'lucide-react';
+import { Play, CheckCircle2, AlertCircle, Loader2, BarChart3, Info, Cpu, Crosshair } from 'lucide-react';
 import FileUpload from '../components/FileUpload';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import ProgressBar from '../components/ProgressBar';
 
+const MODELS = {
+  cnn: {
+    id: 'cnn',
+    label: '3D CNN + BiLSTM',
+    description: 'Appearance-based model — works on raw pixel frames (grayscale mouth region)',
+    apiUrl: import.meta.env.VITE_CNN_API_URL,
+    icon: Cpu,
+    color: 'indigo',
+  },
+  landmarks: {
+    id: 'landmarks',
+    label: 'Landmarks MLP + Transformer + BiLSTM',
+    description: 'Geometry-based model — uses MediaPipe lip/chin landmark coordinates',
+    apiUrl: import.meta.env.VITE_LANDMARKS_API_URL,
+    icon: Crosshair,
+    color: 'purple',
+  },
+};
+
 const Demo = () => {
+  const [selectedModel, setSelectedModel] = useState('cnn');
   const [file, setFile] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [statusMsg, setStatusMsg] = useState('');
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
 
@@ -18,64 +39,64 @@ const Demo = () => {
     setResult(null);
     setError(null);
     setProgress(0);
+    setStatusMsg('');
   };
 
-  const simulateProcessing = async () => {
+  const handleModelChange = (modelId) => {
+    setSelectedModel(modelId);
+    setResult(null);
+    setError(null);
+    setProgress(0);
+    setStatusMsg('');
+  };
+
+  const handleProcess = async () => {
+    if (!file) return;
+
     setProcessing(true);
     setError(null);
     setResult(null);
-    
-    const stages = [
-      { progress: 20, delay: 800, message: 'Extracting frames...' },
-      { progress: 40, delay: 1000, message: 'Detecting facial landmarks...' },
-      { progress: 60, delay: 1200, message: 'Processing visual features...' },
-      { progress: 80, delay: 1000, message: 'Running inference...' },
-      { progress: 100, delay: 800, message: 'Complete!' },
-    ];
+    setProgress(0);
 
     try {
-      for (const stage of stages) {
-        await new Promise(resolve => setTimeout(resolve, stage.delay));
-        setProgress(stage.progress);
+      // Stage 1 — uploading
+      setStatusMsg('Uploading video...');
+      setProgress(20);
+
+      const formData = new FormData();
+      formData.append('video', file);
+
+      // Stage 2 — server processing
+      setStatusMsg('Extracting frames...');
+      setProgress(50);
+
+      const response = await fetch(`${MODELS[selectedModel].apiUrl}/predict`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      setProgress(85);
+      setStatusMsg('Running model inference...');
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.detail || errData.error || `Server error: ${response.status}`);
       }
 
-      // Simulate result with sentence predictions
-      const mockResults = [
-        { 
-          sentence: 'The weather is absolutely beautiful today', 
-          confidence: 0.91,
-          words: ['the', 'weather', 'is', 'absolutely', 'beautiful', 'today']
-        },
-        { 
-          sentence: 'The weather is absolutely beautiful now', 
-          confidence: 0.84,
-          words: ['the', 'weather', 'is', 'absolutely', 'beautiful', 'now']
-        },
-        { 
-          sentence: 'The weather looks absolutely beautiful today', 
-          confidence: 0.78,
-          words: ['the', 'weather', 'looks', 'absolutely', 'beautiful', 'today']
-        },
-      ];
+      const data = await response.json();
+      setProgress(100);
+      setStatusMsg('Done!');
+      setResult(data);
 
-      setResult({
-        prediction: mockResults[0].sentence,
-        confidence: mockResults[0].confidence,
-        words: mockResults[0].words,
-        alternatives: mockResults,
-        processingTime: '2.8s',
-        frameCount: 29,
-      });
     } catch (err) {
-      setError('Processing failed. Please try again.');
+      if (err.message.includes('fetch') || err.message.includes('NetworkError')) {
+        setError(`Cannot reach the API server (${MODELS[selectedModel].apiUrl}). Make sure the backend is running.`);
+      } else {
+        setError(err.message || 'Prediction failed. Please try again.');
+      }
     } finally {
       setProcessing(false);
     }
-  };
-
-  const handleProcess = () => {
-    if (!file) return;
-    simulateProcessing();
   };
 
   return (
@@ -90,9 +111,56 @@ const Demo = () => {
             Try the <span className="text-gradient">Demo</span>
           </h1>
           <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            Upload a video to see our AI lip reading system in action
+            Upload a short video of someone saying a single word — our CNN model will predict it
           </p>
         </motion.div>
+
+        {/* Model Selector */}
+        <div className="max-w-4xl mx-auto mb-6">
+          <p className="text-sm text-gray-400 mb-3 font-medium uppercase tracking-wider">Select Model</p>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {Object.values(MODELS).map((m) => {
+              const Icon = m.icon;
+              const active = selectedModel === m.id;
+              const ring = m.color === 'indigo' ? 'border-indigo-500 bg-indigo-500/10' : 'border-purple-500 bg-purple-500/10';
+              const iconColor = m.color === 'indigo' ? 'text-indigo-400' : 'text-purple-400';
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => handleModelChange(m.id)}
+                  className={`flex items-start gap-3 text-left rounded-lg border px-5 py-4 transition-all cursor-pointer ${
+                    active ? ring : 'border-[#1f1f1f] bg-[#0a0a0a] hover:border-[#333]'
+                  }`}
+                >
+                  <Icon size={20} className={`mt-0.5 shrink-0 ${active ? iconColor : 'text-gray-500'}`} />
+                  <div>
+                    <p className={`font-semibold text-sm ${active ? 'text-white' : 'text-gray-400'}`}>{m.label}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{m.description}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Model info banner */}
+        <div className="max-w-4xl mx-auto mb-6">
+          <div className={`flex items-start gap-3 border rounded-lg px-5 py-4 text-sm text-gray-300 ${
+            selectedModel === 'cnn'
+              ? 'bg-indigo-500/10 border-indigo-500/20'
+              : 'bg-purple-500/10 border-purple-500/20'
+          }`}>
+            <Info size={18} className={`mt-0.5 shrink-0 ${selectedModel === 'cnn' ? 'text-indigo-400' : 'text-purple-400'}`} />
+            <div>
+              <span className="font-semibold text-white">Single Word Mode</span>
+              {selectedModel === 'cnn' ? (
+                <span className="text-gray-400"> — 3D CNN + BiLSTM model trained on LRW (500 words). Upload a 1–3 second clip of a single word. Works on raw pixel frames; face crop is applied automatically.</span>
+              ) : (
+                <span className="text-gray-400"> — MLP + 2× Transformer + BiLSTM model trained on LRW (500 words). Uses MediaPipe to extract 50 lip/chin landmarks per frame. Requires a clearly visible face.</span>
+              )}
+            </div>
+          </div>
+        </div>
 
         <div className="max-w-4xl mx-auto space-y-8">
           {/* Upload Section */}
@@ -112,7 +180,7 @@ const Demo = () => {
                   className="cursor-pointer"
                   onClick={handleProcess}
                 >
-                  Process Video
+                  Run Prediction
                 </Button>
               </motion.div>
             )}
@@ -132,22 +200,7 @@ const Demo = () => {
                     <h3 className="text-2xl font-semibold">Processing Video...</h3>
                   </div>
                   <ProgressBar progress={progress} className="mb-6" />
-                  <div className="grid grid-cols-2 gap-6 text-sm">
-                    <div>
-                      <span className="block text-white font-medium mb-2">Current Stage</span>
-                      <span className="text-gray-400">
-                        {progress < 20 && 'Extracting frames'}
-                        {progress >= 20 && progress < 40 && 'Detecting landmarks'}
-                        {progress >= 40 && progress < 60 && 'Processing features'}
-                        {progress >= 60 && progress < 80 && 'Running inference'}
-                        {progress >= 80 && 'Finalizing results'}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="block text-white font-medium mb-2">Progress</span>
-                      <span className="text-gray-400">{progress}%</span>
-                    </div>
-                  </div>
+                  <div className="text-sm text-gray-400">{statusMsg}</div>
                 </Card>
               </motion.div>
             )}
@@ -165,74 +218,68 @@ const Demo = () => {
                 <Card glow>
                   <div className="flex items-center gap-3 mb-8">
                     <CheckCircle2 className="text-emerald-500" size={32} />
-                    <h3 className="text-2xl font-semibold">Transcription Result</h3>
+                    <h3 className="text-2xl font-semibold">Prediction Result</h3>
                   </div>
 
-                  {/* Main Prediction */}
-                  <div className="bg-[#0a0a0a] rounded-lg p-8 mb-8 border border-indigo-500/20">
-                    <div className="text-sm text-gray-400 mb-3 uppercase tracking-wider">Predicted Text</div>
-                    <div className="text-2xl md:text-3xl font-medium text-white mb-6 leading-relaxed">
-                      "{result.prediction}"
+                  {/* Top prediction — big display */}
+                  <div className="bg-[#0a0a0a] rounded-lg p-8 mb-8 border border-indigo-500/20 text-center">
+                    <div className="text-sm text-gray-400 mb-3 uppercase tracking-wider">Predicted Word</div>
+                    <div className="text-5xl md:text-6xl font-bold text-white mb-4 tracking-wide uppercase">
+                      {result.top_prediction}
                     </div>
-                    <div className="flex flex-wrap items-center gap-6">
-                      <div className="flex items-center gap-2">
-                        <BarChart3 size={18} className="text-indigo-400" />
-                        <span className="text-sm text-gray-400">
-                          Confidence: <span className="text-white font-semibold">{(result.confidence * 100).toFixed(1)}%</span>
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-400">
-                          Words: <span className="text-white font-semibold">{result.words.length}</span>
-                        </span>
-                      </div>
+                    <div className="flex items-center justify-center gap-2">
+                      <BarChart3 size={16} className="text-indigo-400" />
+                      <span className="text-gray-400 text-sm">
+                        Confidence: <span className="text-white font-semibold">{result.confidence}%</span>
+                      </span>
                     </div>
                   </div>
 
-                  {/* Word Breakdown */}
-                  <div className="mb-8">
-                    <h4 className="text-lg font-semibold mb-4">Word Breakdown</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {result.words.map((word, index) => (
-                        <motion.span
-                          key={index}
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: index * 0.05 }}
-                          className="px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-lg text-sm font-medium"
-                        >
-                          {word}
-                        </motion.span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Stats */}
+                  {/* Stats row */}
                   <div className="grid grid-cols-2 gap-4 mb-8">
-                    <div className="bg-[#0a0a0a] rounded-lg p-6 border border-[#1f1f1f]">
-                      <div className="text-sm text-gray-400 mb-2">Processing Time</div>
-                      <div className="text-2xl font-semibold">{result.processingTime}</div>
+                    <div className="bg-[#0a0a0a] rounded-lg p-5 border border-[#1f1f1f]">
+                      <div className="text-sm text-gray-400 mb-1">Processing Time</div>
+                      <div className="text-2xl font-semibold">{result.processing_time}</div>
                     </div>
-                    <div className="bg-[#0a0a0a] rounded-lg p-6 border border-[#1f1f1f]">
-                      <div className="text-sm text-gray-400 mb-2">Frames Analyzed</div>
-                      <div className="text-2xl font-semibold">{result.frameCount}</div>
+                    <div className="bg-[#0a0a0a] rounded-lg p-5 border border-[#1f1f1f]">
+                      <div className="text-sm text-gray-400 mb-1">
+                        {result.detection_rate !== undefined ? 'Face Detection Rate' : 'Frames Analyzed'}
+                      </div>
+                      <div className="text-2xl font-semibold">
+                        {result.detection_rate !== undefined
+                          ? `${result.detection_rate}%`
+                          : result.frame_count}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Alternative Predictions */}
+                  {/* Top-5 alternatives */}
                   <div>
-                    <h4 className="text-lg font-semibold mb-4">Alternative Predictions</h4>
+                    <h4 className="text-lg font-semibold mb-4">Top 5 Candidates</h4>
                     <div className="space-y-3">
-                      {result.alternatives.map((alt, index) => (
-                        <div key={index} className="bg-[#0a0a0a] rounded-lg p-5 border border-[#1f1f1f]">
-                          <div className="flex items-start justify-between gap-4 mb-3">
-                            <span className="text-gray-200 flex-1">"{alt.sentence}"</span>
-                            <span className="text-sm text-gray-400 shrink-0">
-                              {(alt.confidence * 100).toFixed(1)}%
+                      {result.top5.map((item, index) => (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.06 }}
+                          className={`rounded-lg p-4 border ${
+                            index === 0
+                              ? 'border-indigo-500/40 bg-indigo-500/5'
+                              : 'border-[#1f1f1f] bg-[#0a0a0a]'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <span className={`font-semibold uppercase tracking-wide ${
+                              index === 0 ? 'text-white text-base' : 'text-gray-300 text-sm'
+                            }`}>
+                              {index === 0 && <span className="text-indigo-400 mr-2">✓</span>}
+                              {item.word}
                             </span>
+                            <span className="text-sm text-gray-400">{item.confidence}%</span>
                           </div>
-                          <ProgressBar progress={alt.confidence * 100} />
-                        </div>
+                          <ProgressBar progress={item.confidence} />
+                        </motion.div>
                       ))}
                     </div>
                   </div>
@@ -245,9 +292,10 @@ const Demo = () => {
                         setFile(null);
                         setResult(null);
                         setProgress(0);
+                        setStatusMsg('');
                       }}
                     >
-                      Process Another Video
+                      Try Another Video
                     </Button>
                   </div>
                 </Card>
@@ -264,9 +312,12 @@ const Demo = () => {
                 exit={{ opacity: 0, y: -20 }}
               >
                 <Card>
-                  <div className="flex items-center gap-3 text-red-500">
-                    <AlertCircle size={24} />
-                    <p>{error}</p>
+                  <div className="flex items-start gap-3 text-red-400">
+                    <AlertCircle size={22} className="shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold mb-1">Error</p>
+                      <p className="text-sm text-red-300">{error}</p>
+                    </div>
                   </div>
                 </Card>
               </motion.div>
@@ -288,15 +339,15 @@ const Demo = () => {
                     <ul className="space-y-2 text-sm text-gray-400">
                       <li className="flex items-start gap-2">
                         <span className="text-indigo-500 mt-1">•</span>
+                        <span>Say a <strong className="text-white">single word</strong> clearly</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-indigo-500 mt-1">•</span>
                         <span>Clear visibility of lips and mouth</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-indigo-500 mt-1">•</span>
-                        <span>Good lighting conditions</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-indigo-500 mt-1">•</span>
-                        <span>Face centered in frame</span>
+                        <span>Good lighting, face centered in frame</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-indigo-500 mt-1">•</span>
@@ -317,7 +368,7 @@ const Demo = () => {
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-purple-500 mt-1">•</span>
-                        <span>Optimal duration: 1-3 seconds</span>
+                        <span>Optimal duration: 1–3 seconds</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-purple-500 mt-1">•</span>
