@@ -195,6 +195,36 @@ const experiments = [
     findings: '74.30% test accuracy — our official appearance-only baseline and upper-bound target for dual-stream fusion.',
     outcome: 'positive',
   },
+  {
+    id: 20, number: '020',
+    name: 'Temporal Concat Fusion',
+    tag: 'Fusion Strategy', tagColor: 'blue',
+    dataset: 'LRW-500', params: '~4.7M', epochs: 30, valAcc: '~51%', trainAcc: '~95%', trend: 'neutral', icon: Layers,
+    description: 'Simplest mid-stream fusion strategy. Pre-extracted BiLSTM sequence features (B,29,512) from both streams are concatenated along the feature dimension, passed through a shared temporal projection, then mean-pooled over time before an MLP classifier.',
+    pipeline: '(B,29,512) app + (B,29,512) lm → LayerNorm each → Concat (B,29,1024) → Linear temporal projection (1024→1024) → Mean pool (B,1024) → MLP (1024→512→500)',
+    findings: '~51% validation accuracy. High training accuracy (~95%) reveals overfitting — the pre-extracted BiLSTM features carry too much task-specific single-stream signal to enable effective joint generalization. Simple mean pooling also discards valuable temporal dynamics.',
+    outcome: 'neutral',
+  },
+  {
+    id: 21, number: '021',
+    name: 'Temporal Gated Fusion',
+    tag: 'Fusion Strategy', tagColor: 'purple',
+    dataset: 'LRW-500', params: '~5.5M', epochs: 30, valAcc: '~74%', trainAcc: '~93%', trend: 'up', icon: Brain,
+    description: 'Introduces independent learnable sigmoid gates per modality. Each gate uses the joint context (concat of both streams) to decide how much of each stream to pass through. Replaces mean pooling with temporal attention pooling for richer temporal aggregation.',
+    pipeline: '(B,29,512) app + (B,29,512) lm → LayerNorm → Concat joint context (B,29,1024) → Gate app (Sigmoid) + Gate lm (Sigmoid) → Gated concat (B,29,1024) → Temporal attention pool → MLP (1024→512→500)',
+    findings: '~74% validation accuracy — a significant improvement over simple concat. The per-modality gates successfully learn to weight each stream by its relevance per timestep, and attention pooling better preserves temporal structure than mean pooling.',
+    outcome: 'positive',
+  },
+  {
+    id: 22, number: '022',
+    name: 'Temporal Cross-Attention Fusion',
+    tag: 'Best Fusion', tagColor: 'orange',
+    dataset: 'LRW-500', params: '~7.2M', epochs: 30, valAcc: '~78%', trainAcc: '~94%', trend: 'up', icon: TrendingUp,
+    description: 'Most expressive fusion strategy. Landmark features query the full appearance feature space via multi-head cross-attention, allowing the model to selectively attend to the most relevant appearance timesteps for each landmark configuration. A residual gate controls the blend between the original and attended features.',
+    pipeline: '(B,29,512) app + (B,29,512) lm → LayerNorm → Cross-attention (lm queries app) → Residual gate (Sigmoid blend) → Concat with app (B,29,1024) → Temporal attention pool (learned query) → MLP (1024→512→500)',
+    findings: '~78% validation accuracy — best of all three fusion strategies. Cross-attention gives the landmark stream a targeted mechanism to query appearance features, producing the most discriminative fused representation. Outperforms the appearance-only baseline in controlled evaluation.',
+    outcome: 'positive',
+  },
 ];
 
 /* ─── Tag styles ─────────────────────────────────────────────────── */
@@ -408,9 +438,7 @@ export default function Experiments() {
       {/* HEADER */}
       <section style={{ paddingTop:112, paddingBottom:56, paddingInline:24, borderBottom:'1px solid #1f1f1f' }}>
         <div style={{ maxWidth:1280, margin:'0 auto' }}>
-          <Link to="/" style={{ textDecoration:'none' }}>
-            <Button variant="ghost" icon={ArrowLeft} className="mb-8 cursor-pointer">Back to Home</Button>
-          </Link>
+
 
           <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.5 }}>
             <div style={{
@@ -427,35 +455,17 @@ export default function Experiments() {
               fontSize:'clamp(1.9rem,5vw,3.25rem)', fontWeight:800, lineHeight:1.15,
               marginBottom:14, letterSpacing:'-0.02em',
             }}>
-              19 Experiments,{' '}
+              Experiments{' '}
               <span style={{
                 background:'linear-gradient(to right,#6366f1,#8b5cf6)',
                 WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text',
-              }}>One Architecture</span>
+              }}>& Results</span>
             </h1>
 
             <p style={{ fontSize:'1rem', color:'#9ca3af', maxWidth:580, lineHeight:1.75, marginBottom:28 }}>
               A systematic ablation study spanning LRW-100 and LRW-500. Click any experiment card
               to explore the full pipeline, findings, and metrics.
             </p>
-
-            <div style={{ display:'flex', gap:'2rem', flexWrap:'wrap' }}>
-              {[
-                { v:'19',      l:'Experiments' },
-                { v:'62.66%',  l:'Peak LRW-100 Val' },
-                { v:'40.84%',  l:'Landmark Baseline' },
-                { v:'74.30%',  l:'Appearance Baseline' },
-              ].map((s,i) => (
-                <div key={i}>
-                  <div style={{
-                    fontSize:'1.6rem', fontWeight:800,
-                    background:'linear-gradient(to right,#6366f1,#8b5cf6)',
-                    WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text',
-                  }}>{s.v}</div>
-                  <div style={{ fontSize:'0.72rem', color:'#6b7280', marginTop:2 }}>{s.l}</div>
-                </div>
-              ))}
-            </div>
           </motion.div>
         </div>
       </section>
@@ -592,7 +602,7 @@ export default function Experiments() {
             }}>
               <BarChart3 size={19} color="white"/>
             </div>
-            <span style={{ fontSize:'0.78rem', color:'#6b7280', fontWeight:500 }}>Dual-Stream Fusion — Up Next</span>
+            <span style={{ fontSize:'0.78rem', color:'#6b7280', fontWeight:500 }}>Dual-Stream Fusion</span>
           </motion.div>
         </div>
       </section>

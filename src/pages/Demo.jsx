@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, CheckCircle2, AlertCircle, Loader2, Cpu, Crosshair,
-  RefreshCw, Upload, FileVideo, X, Clock, Eye, Layers, Zap,
+  RefreshCw, Upload, FileVideo, X, Clock, Eye, Layers, Zap, GitMerge, Link2,
 } from 'lucide-react';
 
 const MODELS = {
@@ -42,12 +42,60 @@ const MODELS = {
     vocab: '100 words',
     tag: 'Lightweight',
   },
+  fusion: {
+    id: 'fusion',
+    label: 'Fusion Models',
+    description: 'Combines CNN appearance + landmark geometry streams for joint prediction',
+    apiUrl: null,
+    icon: Layers,
+    color: 'orange',
+    accent: '#f97316',
+    accuracy: 'Up to ~78%',
+    vocab: '500 words',
+    tag: 'Fusion',
+  },
+};
+
+const FUSION_SUBMODELS = {
+  crossattn: {
+    id: 'crossattn',
+    label: 'Cross-Attention',
+    description: 'Landmark features attend over appearance via multi-head cross-attention',
+    apiUrl: import.meta.env.VITE_FUSION_CROSSATTN_API_URL,
+    icon: Layers,
+    color: 'orange',
+    accent: '#f97316',
+    tag: 'Best Fusion',
+  },
+  gated: {
+    id: 'gated',
+    label: 'Temporal Gated',
+    description: 'Per-modality sigmoid gates with temporal attention pooling',
+    apiUrl: import.meta.env.VITE_FUSION_GATED_API_URL,
+    icon: GitMerge,
+    color: 'rose',
+    accent: '#f43f5e',
+    tag: 'Gated Fusion',
+  },
+  concat: {
+    id: 'concat',
+    label: 'Temporal Concat',
+    description: 'Simple concatenation with shared temporal projection and mean pooling',
+    apiUrl: import.meta.env.VITE_FUSION_CONCAT_API_URL,
+    icon: Link2,
+    color: 'amber',
+    accent: '#f59e0b',
+    tag: 'Simple Fusion',
+  },
 };
 
 const COLOR = {
   indigo: { ring: 'border-indigo-500', bg: 'bg-indigo-500/10', text: 'text-indigo-400', bar: 'bg-indigo-500' },
   purple: { ring: 'border-purple-500', bg: 'bg-purple-500/10', text: 'text-purple-400', bar: 'bg-purple-500' },
   teal:   { ring: 'border-teal-500',   bg: 'bg-teal-500/10',   text: 'text-teal-400',   bar: 'bg-teal-500'   },
+  orange: { ring: 'border-orange-500', bg: 'bg-orange-500/10', text: 'text-orange-400', bar: 'bg-orange-500' },
+  rose:   { ring: 'border-rose-500',   bg: 'bg-rose-500/10',   text: 'text-rose-400',   bar: 'bg-rose-500'   },
+  amber:  { ring: 'border-amber-500',  bg: 'bg-amber-500/10',  text: 'text-amber-400',  bar: 'bg-amber-500'  },
 };
 
 const STEPS = [
@@ -141,6 +189,7 @@ const Uploader = ({ onFileSelect, disabled }) => {
 // ── Main page ─────────────────────────────────────────────────────────────────
 const Demo = () => {
   const [selectedModel, setSelectedModel] = useState('cnn');
+  const [selectedFusion, setSelectedFusion] = useState('crossattn');
   const [file,          setFile]          = useState(null);
   const [videoUrl,      setVideoUrl]      = useState(null);
   const [processing,    setProcessing]    = useState(false);
@@ -151,7 +200,10 @@ const Demo = () => {
   const [selectedWord, setSelectedWord] = useState(null);
 
   const model = MODELS[selectedModel];
-  const c = COLOR[model.color];
+  const activeFusion = FUSION_SUBMODELS[selectedFusion];
+  const activeColor  = (selectedModel === 'fusion') ? activeFusion.color : model.color;
+  const activeAccent = (selectedModel === 'fusion') ? activeFusion.accent : model.accent;
+  const c = COLOR[activeColor];
   const currentStep = result ? 3 : file ? 2 : 1;
 
   const handleFileSelect = useCallback((f) => {
@@ -165,6 +217,13 @@ const Demo = () => {
 
   const handleModelChange = (id) => {
     setSelectedModel(id);
+    setResult(null);
+    setError(null);
+    if (id !== 'fusion') setSelectedFusion('crossattn');
+  };
+
+  const handleFusionChange = (id) => {
+    setSelectedFusion(id);
     setResult(null);
     setError(null);
   };
@@ -193,8 +252,12 @@ const Demo = () => {
       const formData = new FormData();
       formData.append('video', file);
 
+      const activeUrl = selectedModel === 'fusion'
+        ? activeFusion.apiUrl
+        : model.apiUrl;
+
       setStage(2);
-      const response = await fetch(`${model.apiUrl}/predict`, { method: 'POST', body: formData });
+      const response = await fetch(`${activeUrl}/predict`, { method: 'POST', body: formData });
 
       setStage(3);
       if (!response.ok) {
@@ -207,9 +270,10 @@ const Demo = () => {
       setSelectedWord(data.top_prediction);
     } catch (err) {
       const msg = err.message || '';
+      const activeUrl = selectedModel === 'fusion' ? activeFusion.apiUrl : model.apiUrl;
       setError(
         msg.includes('fetch') || msg.includes('NetworkError') || msg.includes('Failed to fetch')
-          ? `Cannot reach the API server (${model.apiUrl}). Make sure the backend is running.`
+          ? `Cannot reach the API server (${activeUrl}). Make sure the backend is running.`
           : msg || 'Prediction failed. Please try again.'
       );
     } finally {
@@ -263,7 +327,7 @@ const Demo = () => {
         {/* ── Model Selector ── */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-8">
           <p className="text-xs text-gray-600 uppercase tracking-widest font-medium mb-3">Choose Model</p>
-          <div className="grid sm:grid-cols-3 gap-3">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {Object.values(MODELS).map((m) => {
               const Icon = m.icon;
               const col  = COLOR[m.color];
@@ -298,6 +362,52 @@ const Demo = () => {
               );
             })}
           </div>
+
+          {/* ── Fusion Sub-Selector (shown only when fusion category is active) ── */}
+          <AnimatePresence>
+            {selectedModel === 'fusion' && (
+              <motion.div
+                key="fusion-sub"
+                initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
+                exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                className="overflow-hidden"
+              >
+                <p className="text-xs text-gray-600 uppercase tracking-widest font-medium mb-3">Choose Fusion Strategy</p>
+                <div className="grid sm:grid-cols-3 gap-3">
+                  {Object.values(FUSION_SUBMODELS).map((fm) => {
+                    const FIcon = fm.icon;
+                    const fcol  = COLOR[fm.color];
+                    const factive = selectedFusion === fm.id;
+                    return (
+                      <motion.button key={fm.id} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+                        onClick={() => handleFusionChange(fm.id)} disabled={processing}
+                        className={`relative text-left rounded-xl border p-4 transition-all duration-200 cursor-pointer overflow-hidden ${
+                          factive ? `${fcol.ring} ${fcol.bg}` : 'border-white/8 bg-white/2 hover:border-white/15'
+                        }`}
+                      >
+                        {factive && (
+                          <motion.div layoutId="fusion-sub-glow" className="absolute inset-0 pointer-events-none"
+                            style={{ background: `radial-gradient(ellipse at top left, ${fm.accent}18 0%, transparent 70%)` }} />
+                        )}
+                        <div className="flex items-start justify-between mb-2">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${factive ? fcol.bg : 'bg-white/5'}`}>
+                            <FIcon size={16} className={factive ? fcol.text : 'text-gray-500'} />
+                          </div>
+                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                            factive ? `${fcol.bg} ${fcol.text}` : 'bg-white/5 text-gray-600'
+                          }`}>{fm.tag}</span>
+                        </div>
+                        <p className={`font-semibold text-sm leading-snug mb-1 ${factive ? 'text-white' : 'text-gray-400'}`}>{fm.label}</p>
+                        <p className="text-xs text-gray-600 mb-2 leading-relaxed">{fm.description}</p>
+                        <span className={`text-xs font-bold ${factive ? fcol.text : 'text-gray-600'}`}>{fm.accuracy}</span>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
         {/* ── Main content area ── */}
@@ -312,7 +422,7 @@ const Demo = () => {
                   <Loader2 size={28} className={`${c.text} animate-spin`} />
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-1">Analysing your video</h3>
-                <p className="text-sm text-gray-500">{model.label}</p>
+                <p className="text-sm text-gray-500">{selectedModel === 'fusion' ? activeFusion.label : model.label}</p>
               </div>
               <div className="max-w-md mx-auto space-y-4">
                 {PROCESS_STAGES.map((s, i) => {
@@ -352,13 +462,13 @@ const Demo = () => {
               {/* Big prediction — full width */}
               <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
                 className={`rounded-2xl border ${c.ring} border-opacity-40 ${c.bg} p-8 flex flex-col justify-center`}
-                style={{ boxShadow: `0 0 60px ${model.accent}18` }}>
+                style={{ boxShadow: `0 0 60px ${activeAccent}18` }}>
                 <div className="flex items-center gap-2 mb-4">
                   <div className={`w-2 h-2 rounded-full ${c.bar} animate-pulse`} />
                   <span className="text-xs uppercase tracking-widest text-gray-500 font-medium">Top Prediction</span>
                 </div>
                 <div className={`text-6xl md:text-7xl font-black tracking-tight uppercase mb-4 ${c.text}`}
-                  style={{ textShadow: `0 0 40px ${model.accent}60` }}>
+                  style={{ textShadow: `0 0 40px ${activeAccent}60` }}>
                   {result.top_prediction}
                 </div>
                 <div className="text-sm text-gray-400">
@@ -368,7 +478,7 @@ const Demo = () => {
                   <motion.div initial={{ width: 0 }} animate={{ width: `${result.confidence}%` }}
                     transition={{ duration: 0.8, ease: 'easeOut' }}
                     className={`h-full rounded-full ${c.bar}`}
-                    style={{ boxShadow: `0 0 10px ${model.accent}` }} />
+                    style={{ boxShadow: `0 0 10px ${activeAccent}` }} />
                 </div>
               </motion.div>
 
@@ -430,7 +540,7 @@ const Demo = () => {
                     <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
                       onClick={handleProcess}
                       className={`flex items-center gap-2.5 px-6 py-3 rounded-xl font-semibold text-sm text-white cursor-pointer transition-all ${c.bar} hover:opacity-90`}
-                      style={{ boxShadow: `0 4px 20px ${model.accent}40` }}>
+                      style={{ boxShadow: `0 4px 20px ${activeAccent}40` }}>
                       <Play size={16} fill="white" />
                       Analyse Video
                     </motion.button>

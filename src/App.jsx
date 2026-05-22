@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import Demo from './pages/Demo';
 import Article from './pages/Article';
 import Experiments from './pages/Experiments';
+import Presentation from './pages/Presentation';
 import ScrollToTop from './components/ScrollToTop';
 import './App.css';
 
@@ -22,6 +23,7 @@ function App() {
               <Route path="/demo" element={<Demo />} />
               <Route path="/article" element={<Article />} />
               <Route path="/experiments" element={<Experiments />} />
+              <Route path="/presentation" element={<Presentation />} />
             </Routes>
           </AnimatePresence>
         </main>
