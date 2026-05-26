@@ -2,7 +2,9 @@
 
 @layer base {
   body {
-    @apply bg-[#0a0a0a] text-white antialiased m-0 p-0;
+    @apply antialiased m-0 p-0;
+    background-color: #e8e8e8;
+    color: #1a1a1a;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
   

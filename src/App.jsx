@@ -14,7 +14,7 @@ function App() {
   return (
     <Router>
       <ScrollToTop />
-      <div className="min-h-screen bg-[#0a0a0a] flex flex-col">
+      <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#e8e8e8' }}>
         <Navbar />
         <main className="flex-1">
           <AnimatePresence mode="wait">

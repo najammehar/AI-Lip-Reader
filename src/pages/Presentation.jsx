@@ -15,7 +15,7 @@ const THANKS_PARTICLES = Array.from({ length: 14 }, (_, i) => ({
   w: 20 + (i * 41) % 60, h: 20 + (i * 41) % 60,
   x: (i * 71) % 100, y: (i * 47) % 100,
   dur: 3 + (i * 19) % 3, delay: (i * 31) % 200 / 100,
-  color: ['#6366f1', '#8b5cf6', '#ec4899'][i % 3],
+  color: ['#f97316', '#1a1a1a', '#555555'][i % 3],
 }));
 
 /* ── Slide transition variants ────────────────────────────────── */
@@ -26,11 +26,11 @@ const slideVariants = {
 };
 
 /* ── Reusable primitives ──────────────────────────────────────── */
-function Badge({ children, color = '#6366f1' }) {
+function Badge({ children, color = '#f97316' }) {
   return (
     <span style={{
-      backgroundColor: `${color}22`, color,
-      border: `1px solid ${color}44`,
+      backgroundColor: `${color}18`, color,
+      border: `1px solid ${color}40`,
       borderRadius: '999px', padding: '2px 14px',
       fontSize: '0.68rem', fontWeight: 700,
       display: 'inline-block', letterSpacing: '0.1em', textTransform: 'uppercase',
@@ -43,8 +43,14 @@ function Badge({ children, color = '#6366f1' }) {
 function GlassCard({ children, style, className = '' }) {
   return (
     <div
-      className={`rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-sm p-5 ${className}`}
-      style={style}
+      style={{
+        backgroundColor: '#f0f0f0',
+        border: '1px solid #cccccc',
+        borderRadius: '16px',
+        padding: '1.25rem',
+        ...style,
+      }}
+      className={className}
     >
       {children}
     </div>
@@ -60,7 +66,7 @@ function TitleSlide() {
         <motion.div
           key={i}
           className="absolute rounded-full pointer-events-none"
-          style={{ width: p.w, height: p.h, left: `${p.x}%`, top: `${p.y}%`, background: '#6366f115' }}
+          style={{ width: p.w, height: p.h, left: `${p.x}%`, top: `${p.y}%`, background: '#1a1a1a0a' }}
           animate={{ y: [0, -30, 0], opacity: [0.2, 0.5, 0.2] }}
           transition={{ duration: p.dur, repeat: Infinity, delay: p.delay }}
         />
@@ -69,7 +75,7 @@ function TitleSlide() {
       <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="relative z-10">
         <motion.div
           className="mx-auto mb-6 w-20 h-20 rounded-2xl flex items-center justify-center"
-          style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }}
+          style={{ background: '#1a1a1a' }}
           animate={{ rotate: [0, 5, -5, 0] }}
           transition={{ duration: 6, repeat: Infinity }}
         >
@@ -78,7 +84,7 @@ function TitleSlide() {
 
         <h1
           className="text-7xl font-black mb-4 leading-none"
-          style={{ background: 'linear-gradient(135deg,#6366f1,#a78bfa,#ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+          style={{ color: '#1a1a1a' }}
         >
           LipReader.AI
         </h1>
@@ -90,7 +96,7 @@ function TitleSlide() {
         <div className="flex items-center justify-center gap-3 flex-wrap">
           {['CNN + Transformer', 'Landmark Fusion', 'LRW · LRS2', 'Dual-Stream'].map((tag, i) => (
             <motion.div key={tag} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 + i * 0.1 }}>
-              <Badge color={['#6366f1','#8b5cf6','#ec4899','#10b981'][i]}>{tag}</Badge>
+              <Badge color={['#f97316','#1a1a1a','#9333ea','#16a34a'][i]}>{tag}</Badge>
             </motion.div>
           ))}
         </div>
@@ -867,7 +873,7 @@ function ThanksSlide() {
       <motion.div initial={{ opacity: 0, y: 35 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="relative z-10">
         <h1
           className="text-8xl font-black mb-4 leading-none"
-          style={{ background: 'linear-gradient(135deg,#6366f1,#a78bfa,#ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+          style={{ color: '#1a1a1a' }}
         >
           Thank You
         </h1>
@@ -875,10 +881,11 @@ function ThanksSlide() {
         <p className="text-gray-600 text-base mb-10">Final Year Project · COMSATS University Lahore · 2026</p>
 
         <motion.div
-          className="p-5 rounded-2xl border border-indigo-500/30 bg-indigo-500/5 max-w-md mx-auto"
+          className="p-5 rounded-2xl max-w-md mx-auto"
+          style={{ border: '1px solid #cccccc', backgroundColor: '#f0f0f0' }}
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.75 }}
         >
-          <p className="text-gray-500">Questions &amp; Discussion</p>
+          <p style={{ color: '#555555' }}>Questions &amp; Discussion</p>
         </motion.div>
       </motion.div>
     </div>
@@ -924,19 +931,31 @@ export default function Presentation() {
   const SlideComponent = SLIDE_COMPONENTS[current];
 
   return (
-    <div className="min-h-screen bg-[#050508] flex flex-col" style={{ paddingTop: '64px' }}>
+    <div className="min-h-screen flex flex-col" style={{ paddingTop: '64px', backgroundColor: '#e8e8e8', color: '#1a1a1a' }}>
+      {/* Global CSS overrides for Tailwind dark classes inside slides */}
+      <style>{`
+        .pres-content [class~="text-white"] { color: #1a1a1a !important; }
+        .pres-content [class~="text-gray-200"] { color: #222222 !important; }
+        .pres-content [class~="text-gray-300"] { color: #333333 !important; }
+        .pres-content [class~="text-gray-400"] { color: #555555 !important; }
+        .pres-content [class~="text-gray-500"] { color: #777777 !important; }
+        .pres-content [class~="text-gray-600"] { color: #888888 !important; }
+        .pres-content [class~="text-gray-700"] { color: #999999 !important; }
+        .pres-content h1, .pres-content h2, .pres-content h3 { color: #1a1a1a; }
+        .pres-content strong { color: inherit !important; }
+      `}</style>
       {/* ── top progress bar */}
-      <div className="fixed top-[64px] left-0 right-0 z-40 h-0.5 bg-white/5">
+      <div className="fixed top-[64px] left-0 right-0 z-40 h-0.5" style={{ backgroundColor: '#e0e0e0' }}>
         <motion.div
           className="h-full"
-          style={{ background: 'linear-gradient(90deg,#6366f1,#8b5cf6)' }}
+          style={{ background: '#f97316' }}
           animate={{ width: `${((current + 1) / TOTAL_SLIDES) * 100}%` }}
           transition={{ duration: 0.35 }}
         />
       </div>
 
       {/* ── slide viewport */}
-      <div className="relative overflow-hidden" style={{ height: 'calc(100vh - 64px - 60px)' }}>
+      <div className="relative overflow-hidden pres-content" style={{ height: 'calc(100vh - 64px - 60px)' }}>
         <AnimatePresence custom={direction} mode="wait">
           <motion.div
             key={current}
@@ -958,17 +977,17 @@ export default function Presentation() {
         className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between px-8"
         style={{
           height: '60px',
-          background: 'rgba(5,5,8,0.92)',
+          background: 'rgba(240,240,240,0.95)',
           backdropFilter: 'blur(16px)',
-          borderTop: '1px solid rgba(255,255,255,0.06)',
+          borderTop: '1px solid #cccccc',
         }}
       >
         {/* slide counter + name */}
         <div className="flex items-center gap-3 w-48">
-          <span className="text-gray-700 text-xs font-mono tabular-nums">
+          <span className="text-xs font-mono tabular-nums" style={{ color: '#888888' }}>
             {String(current + 1).padStart(2, '0')}&nbsp;/&nbsp;{TOTAL_SLIDES}
           </span>
-          <span className="text-gray-500 text-sm truncate">{SLIDE_TITLES[current]}</span>
+          <span className="text-sm truncate" style={{ color: '#555555' }}>{SLIDE_TITLES[current]}</span>
         </div>
 
         {/* dot navigation */}
@@ -982,7 +1001,7 @@ export default function Presentation() {
               style={{
                 width: i === current ? 22 : 7,
                 height: 7,
-                background: i === current ? '#6366f1' : i < current ? '#6366f155' : '#2d2d3a',
+                background: i === current ? '#f97316' : i < current ? '#f9731666' : '#cccccc',
               }}
             />
           ))}
@@ -994,7 +1013,7 @@ export default function Presentation() {
             onClick={prev}
             disabled={current === 0}
             className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-25 transition-colors"
-            style={{ border: '1px solid rgba(255,255,255,0.1)', color: '#9ca3af', background: 'transparent' }}
+            style={{ border: '1px solid #cccccc', color: '#555555', background: '#f0f0f0' }}
           >
             ← Prev
           </button>
@@ -1002,7 +1021,7 @@ export default function Presentation() {
             onClick={next}
             disabled={current === TOTAL_SLIDES - 1}
             className="flex items-center gap-1 px-4 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-25 text-white transition-opacity"
-            style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', border: 'none' }}
+            style={{ background: '#1a1a1a', border: 'none', color: 'white' }}
           >
             Next →
           </button>

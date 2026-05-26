@@ -1,108 +1,58 @@
+// ─── DEMO PAGE — redesigned to match Home theme ───────────────────────────────
 import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, CheckCircle2, AlertCircle, Loader2, Cpu, Crosshair,
-  RefreshCw, Upload, FileVideo, X, Clock, Eye, Layers, Zap, GitMerge, Link2,
+  RefreshCw, Upload, FileVideo, X, Layers, Zap, GitMerge, Link2, Download,
 } from 'lucide-react';
 
 const MODELS = {
   cnn: {
-    id: 'cnn',
-    label: '3D CNN + BiLSTM',
+    id: 'cnn', label: '3D CNN + BiLSTM',
     description: 'Trained on raw pixel frames of the mouth region (grayscale, 96×96)',
     apiUrl: import.meta.env.VITE_CNN_API_URL,
-    icon: Cpu,
-    color: 'indigo',
-    accent: '#6366f1',
-    accuracy: '~75%',
-    vocab: '500 words',
-    tag: 'Best Accuracy',
+    icon: Cpu, accent: '#f97316', accuracy: '~75%', vocab: '500 words', tag: 'Appearance',
   },
   landmarks: {
-    id: 'landmarks',
-    label: 'Landmarks + Transformer + BiLSTM',
+    id: 'landmarks', label: 'Landmarks + Transformer',
     description: 'Uses MediaPipe to extract 50 lip/chin landmark coordinates per frame',
     apiUrl: import.meta.env.VITE_LANDMARKS_API_URL,
-    icon: Crosshair,
-    color: 'purple',
-    accent: '#a855f7',
-    accuracy: '~51%',
-    vocab: '500 words',
-    tag: 'Geometry-Based',
+    icon: Crosshair, accent: '#ea580c', accuracy: '~51%', vocab: '500 words', tag: 'Geometry',
   },
-  landmarks100: { 
-    id: 'landmarks100',
-    label: 'Landmarks BiLSTM (100-class)',
+  landmarks100: {
+    id: 'landmarks100', label: 'Landmarks BiLSTM 100',
     description: 'Smaller landmark model trained on 100 LRW words — faster inference',
     apiUrl: import.meta.env.VITE_LANDMARKS_100_API_URL,
-    icon: Zap,
-    color: 'teal',
-    accent: '#14b8a6',
-    accuracy: '~63%',
-    vocab: '100 words',
-    tag: 'Lightweight',
+    icon: Zap, accent: '#fb923c', accuracy: '~63%', vocab: '100 words', tag: 'Lightweight',
   },
   fusion: {
-    id: 'fusion',
-    label: 'Fusion Models',
+    id: 'fusion', label: 'Fusion Models',
     description: 'Combines CNN appearance + landmark geometry streams for joint prediction',
     apiUrl: null,
-    icon: Layers,
-    color: 'orange',
-    accent: '#f97316',
-    accuracy: 'Up to ~78%',
-    vocab: '500 words',
-    tag: 'Fusion',
+    icon: Layers, accent: '#f97316', accuracy: 'Up to ~78%', vocab: '500 words', tag: 'Best',
   },
 };
 
 const FUSION_SUBMODELS = {
   crossattn: {
-    id: 'crossattn',
-    label: 'Cross-Attention',
+    id: 'crossattn', label: 'Cross-Attention',
     description: 'Landmark features attend over appearance via multi-head cross-attention',
     apiUrl: import.meta.env.VITE_FUSION_CROSSATTN_API_URL,
-    icon: Layers,
-    color: 'orange',
-    accent: '#f97316',
-    tag: 'Best Fusion',
+    icon: Layers, accent: '#f97316', tag: 'Best Fusion',
   },
   gated: {
-    id: 'gated',
-    label: 'Temporal Gated',
+    id: 'gated', label: 'Temporal Gated',
     description: 'Per-modality sigmoid gates with temporal attention pooling',
     apiUrl: import.meta.env.VITE_FUSION_GATED_API_URL,
-    icon: GitMerge,
-    color: 'rose',
-    accent: '#f43f5e',
-    tag: 'Gated Fusion',
+    icon: GitMerge, accent: '#ea580c', tag: 'Gated',
   },
   concat: {
-    id: 'concat',
-    label: 'Temporal Concat',
+    id: 'concat', label: 'Temporal Concat',
     description: 'Simple concatenation with shared temporal projection and mean pooling',
     apiUrl: import.meta.env.VITE_FUSION_CONCAT_API_URL,
-    icon: Link2,
-    color: 'amber',
-    accent: '#f59e0b',
-    tag: 'Simple Fusion',
+    icon: Link2, accent: '#fb923c', tag: 'Simple',
   },
 };
-
-const COLOR = {
-  indigo: { ring: 'border-indigo-500', bg: 'bg-indigo-500/10', text: 'text-indigo-400', bar: 'bg-indigo-500' },
-  purple: { ring: 'border-purple-500', bg: 'bg-purple-500/10', text: 'text-purple-400', bar: 'bg-purple-500' },
-  teal:   { ring: 'border-teal-500',   bg: 'bg-teal-500/10',   text: 'text-teal-400',   bar: 'bg-teal-500'   },
-  orange: { ring: 'border-orange-500', bg: 'bg-orange-500/10', text: 'text-orange-400', bar: 'bg-orange-500' },
-  rose:   { ring: 'border-rose-500',   bg: 'bg-rose-500/10',   text: 'text-rose-400',   bar: 'bg-rose-500'   },
-  amber:  { ring: 'border-amber-500',  bg: 'bg-amber-500/10',  text: 'text-amber-400',  bar: 'bg-amber-500'  },
-};
-
-const STEPS = [
-  { n: 1, label: 'Select Model' },
-  { n: 2, label: 'Upload Video' },
-  { n: 3, label: 'View Results' },
-];
 
 const PROCESS_STAGES = [
   { label: 'Uploading video' },
@@ -111,8 +61,8 @@ const PROCESS_STAGES = [
   { label: 'Complete' },
 ];
 
-// ── Inline drag-and-drop uploader ─────────────────────────────────────────────
-const Uploader = ({ onFileSelect, disabled }) => {
+// ── Uploader ───────────────────────────────────────────────────────────────────
+const Uploader = ({ onFileSelect, disabled, accent = '#f97316' }) => {
   const [localFile, setLocalFile] = useState(null);
   const [drag, setDrag] = useState(false);
   const [err, setErr] = useState('');
@@ -133,43 +83,57 @@ const Uploader = ({ onFileSelect, disabled }) => {
   const fmt = (b) => b < 1024 * 1024 ? `${(b / 1024).toFixed(0)} KB` : `${(b / 1024 / 1024).toFixed(1)} MB`;
 
   return (
-    <div className="w-full">
+    <div style={{ width: '100%' }}>
       <motion.div
-        className={`relative border-2 border-dashed rounded-xl transition-all duration-300 ${
-          drag ? 'border-indigo-500 bg-indigo-500/5' : err ? 'border-red-500/60' : 'border-white/10 hover:border-white/25'
-        }`}
+        style={{
+          border: `2px dashed ${drag ? accent : err ? '#ef4444' : '#cccccc'}`,
+          borderRadius: '14px',
+          backgroundColor: drag ? `${accent}08` : '#fafafa',
+          transition: 'all 0.2s',
+        }}
         onDragEnter={(e) => { e.preventDefault(); setDrag(true); }}
         onDragLeave={(e) => { e.preventDefault(); setDrag(false); }}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => { e.preventDefault(); setDrag(false); pick(e.dataTransfer.files[0]); }}
       >
-        <input ref={inputRef} type="file" accept="video/*" className="hidden" id="vid-input"
+        <input ref={inputRef} type="file" accept="video/*" style={{ display: 'none' }} id="vid-input"
           onChange={(e) => pick(e.target.files[0])} disabled={disabled} />
 
         <AnimatePresence mode="wait">
           {!localFile ? (
             <motion.label key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              htmlFor="vid-input" className="flex flex-col items-center justify-center py-16 px-6 cursor-pointer select-none">
-              <motion.div whileHover={{ scale: 1.05 }}
-                className="w-20 h-20 mb-5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-                <Upload size={34} className="text-gray-400" />
+              htmlFor="vid-input"
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3.5rem 1.5rem', cursor: disabled ? 'not-allowed' : 'pointer', userSelect: 'none' }}>
+              <motion.div whileHover={{ scale: 1.06 }} style={{
+                width: '72px', height: '72px', marginBottom: '1.25rem', borderRadius: '16px',
+                backgroundColor: `${accent}10`, border: `1.5px solid ${accent}25`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Upload size={30} style={{ color: accent }} />
               </motion.div>
-              <p className="text-lg font-semibold text-white mb-1">Drop your video here</p>
-              <p className="text-sm text-gray-500">or click to browse — MP4, MOV, AVI, WebM · max 50 MB</p>
+              <p style={{ fontSize: '1rem', fontWeight: '700', color: '#1a1a1a', marginBottom: '0.375rem', letterSpacing: '-0.01em' }}>
+                Drop your video here
+              </p>
+              <p style={{ fontSize: '0.8125rem', color: '#888888' }}>
+                or click to browse — MP4, MOV, AVI, WebM · max 50 MB
+              </p>
             </motion.label>
           ) : (
             <motion.div key="file" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="flex items-center gap-4 px-6 py-5">
-              <div className="w-14 h-14 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center shrink-0">
-                <FileVideo size={26} className="text-indigo-400" />
+              style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.25rem 1.5rem' }}>
+              <div style={{
+                width: '52px', height: '52px', borderRadius: '12px', flexShrink: 0,
+                backgroundColor: `${accent}10`, border: `1px solid ${accent}25`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <FileVideo size={24} style={{ color: accent }} />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-white truncate">{localFile.name}</p>
-                <p className="text-sm text-gray-500 mt-0.5">{fmt(localFile.size)}</p>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontWeight: '600', color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '2px' }}>{localFile.name}</p>
+                <p style={{ fontSize: '0.8125rem', color: '#888888' }}>{fmt(localFile.size)}</p>
               </div>
-              <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-                onClick={clear}
-                className="p-2 rounded-lg hover:bg-white/5 text-gray-500 hover:text-white transition-colors shrink-0">
+              <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={clear}
+                style={{ padding: '0.4rem', borderRadius: '8px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: '#888888', flexShrink: 0, display: 'flex' }}>
                 <X size={18} />
               </motion.button>
             </motion.div>
@@ -177,8 +141,8 @@ const Uploader = ({ onFileSelect, disabled }) => {
         </AnimatePresence>
       </motion.div>
       {err && (
-        <motion.p initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
-          className="text-xs text-red-400 mt-2 flex items-center gap-1.5">
+        <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+          style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
           <AlertCircle size={13} /> {err}
         </motion.p>
       )}
@@ -186,94 +150,101 @@ const Uploader = ({ onFileSelect, disabled }) => {
   );
 };
 
-// ── Main page ─────────────────────────────────────────────────────────────────
+// ── Main Demo page ─────────────────────────────────────────────────────────────
 const Demo = () => {
-  const [selectedModel, setSelectedModel] = useState('cnn');
+  const [selectedModel,  setSelectedModel]  = useState('cnn');
   const [selectedFusion, setSelectedFusion] = useState('crossattn');
-  const [file,          setFile]          = useState(null);
-  const [videoUrl,      setVideoUrl]      = useState(null);
-  const [processing,    setProcessing]    = useState(false);
-  const [stage,         setStage]         = useState(0);
-  const [result,        setResult]        = useState(null);
-  const [error,         setError]         = useState(null);
-  const [uploadKey,     setUploadKey]     = useState(0);
-  const [selectedWord, setSelectedWord] = useState(null);
+  const [file,           setFile]           = useState(null);
+  const [videoUrl,       setVideoUrl]       = useState(null);
+  const [processing,     setProcessing]     = useState(false);
+  const [stage,          setStage]          = useState(0);
+  const [result,         setResult]         = useState(null);
+  const [error,          setError]          = useState(null);
+  const [uploadKey,      setUploadKey]      = useState(0);
+  const [selectedWord,   setSelectedWord]   = useState(null);
+  const [subtitleDownloading, setSubtitleDownloading] = useState(false);
+  const [subtitleError,  setSubtitleError]  = useState('');
 
-  const model = MODELS[selectedModel];
+  const model        = MODELS[selectedModel];
   const activeFusion = FUSION_SUBMODELS[selectedFusion];
-  const activeColor  = (selectedModel === 'fusion') ? activeFusion.color : model.color;
-  const activeAccent = (selectedModel === 'fusion') ? activeFusion.accent : model.accent;
-  const c = COLOR[activeColor];
-  const currentStep = result ? 3 : file ? 2 : 1;
+  const activeAccent = selectedModel === 'fusion' ? activeFusion.accent : model.accent;
+  const currentStep  = result ? 3 : file ? 2 : 1;
 
   const handleFileSelect = useCallback((f) => {
-    setFile(f);
-    setResult(null);
-    setError(null);
-    setStage(0);
+    setFile(f); setResult(null); setError(null); setStage(0);
     if (videoUrl) URL.revokeObjectURL(videoUrl);
     setVideoUrl(f ? URL.createObjectURL(f) : null);
   }, [videoUrl]);
 
   const handleModelChange = (id) => {
-    setSelectedModel(id);
-    setResult(null);
-    setError(null);
+    if (videoUrl) URL.revokeObjectURL(videoUrl);
+    setSelectedModel(id); setResult(null); setError(null); setFile(null); setVideoUrl(null); setStage(0); setSelectedWord(null); setUploadKey((k) => k + 1);
     if (id !== 'fusion') setSelectedFusion('crossattn');
   };
 
   const handleFusionChange = (id) => {
-    setSelectedFusion(id);
-    setResult(null);
-    setError(null);
+    if (videoUrl) URL.revokeObjectURL(videoUrl);
+    setSelectedFusion(id); setResult(null); setError(null); setFile(null); setVideoUrl(null); setStage(0); setSelectedWord(null); setUploadKey((k) => k + 1);
   };
 
   const reset = () => {
     if (videoUrl) URL.revokeObjectURL(videoUrl);
-    setFile(null);
-    setResult(null);
-    setError(null);
-    setStage(0);
-    setVideoUrl(null);
-    setUploadKey((k) => k + 1);
-    setSelectedWord(null);
+    setFile(null); setResult(null); setError(null); setStage(0);
+    setVideoUrl(null); setUploadKey((k) => k + 1); setSelectedWord(null);
+    setSubtitleDownloading(false); setSubtitleError('');
+  };
+
+  const handleDownload = async () => {
+    if (!file || !selectedWord) return;
+    setSubtitleDownloading(true); setSubtitleError('');
+    try {
+      const activeUrl = selectedModel === 'fusion' ? activeFusion.apiUrl : model.apiUrl;
+      const base = new URL(activeUrl).origin;
+      const fd = new FormData();
+      fd.append('video', file);
+      fd.append('word', selectedWord);
+      const res = await fetch(`${base}/burn-subtitle`, { method: 'POST', body: fd });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.detail || `Server error ${res.status}`);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${selectedWord.toLowerCase()}_subtitled.mp4`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setSubtitleError(err.message || 'Download failed');
+    } finally {
+      setSubtitleDownloading(false);
+    }
   };
 
   const handleProcess = async () => {
     if (!file) return;
-    setProcessing(true);
-    setError(null);
-    setResult(null);
-    setStage(0);
-    setSelectedWord(null);
-
+    setProcessing(true); setError(null); setResult(null); setStage(0); setSelectedWord(null);
     try {
       setStage(1);
       const formData = new FormData();
       formData.append('video', file);
-
-      const activeUrl = selectedModel === 'fusion'
-        ? activeFusion.apiUrl
-        : model.apiUrl;
-
+      const activeUrl = selectedModel === 'fusion' ? activeFusion.apiUrl : model.apiUrl;
       setStage(2);
       const response = await fetch(`${activeUrl}/predict`, { method: 'POST', body: formData });
-
       setStage(3);
       if (!response.ok) {
         const d = await response.json().catch(() => ({}));
         throw new Error(d.detail || d.error || `Server error ${response.status}`);
       }
       const data = await response.json();
-      setStage(4);
-      setResult(data);
-      setSelectedWord(data.top_prediction);
+      setStage(4); setResult(data); setSelectedWord(data.top_prediction);
     } catch (err) {
       const msg = err.message || '';
-      const activeUrl = selectedModel === 'fusion' ? activeFusion.apiUrl : model.apiUrl;
+      const isNetwork = msg.includes('fetch') || msg.includes('NetworkError') || msg.includes('Failed to fetch');
       setError(
-        msg.includes('fetch') || msg.includes('NetworkError') || msg.includes('Failed to fetch')
-          ? `Cannot reach the API server (${activeUrl}). Make sure the backend is running.`
+        isNetwork
+          ? '__network__'
           : msg || 'Prediction failed. Please try again.'
       );
     } finally {
@@ -282,125 +253,147 @@ const Demo = () => {
   };
 
   return (
-    <div className="min-h-screen pt-28 pb-24">
-      <div className="container mx-auto max-w-5xl px-6">
+    <div style={{ backgroundColor: '#e8e8e8', minHeight: '100vh', color: '#1a1a1a' }}>
 
-        {/* ── Header ── */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 text-xs font-medium text-gray-400 mb-6 uppercase tracking-widest">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Live Demo — AI Lip Reading
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Decode <span className="text-gradient">Speech</span> from Lips
-          </h1>
-          <p className="text-gray-400 max-w-xl mx-auto">
-            Upload a short clip of someone saying a single word. Choose a model and see real-time predictions with confidence scores.
-          </p>
-        </motion.div>
+      {/* Background grid */}
+      <div style={{
+        position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0,
+        backgroundImage: 'linear-gradient(#cccccc 1px, transparent 1px), linear-gradient(90deg, #cccccc 1px, transparent 1px)',
+        backgroundSize: '60px 60px', opacity: 0.25,
+      }} />
 
-        {/* ── Step Tracker ── */}
-        <div className="flex items-center justify-center gap-0 mb-12">
-          {STEPS.map((s, i) => (
-            <div key={s.n} className="flex items-center">
-              <div className={`flex items-center gap-2.5 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                currentStep === s.n
-                  ? `${c.bg} ${c.text} border ${c.ring} border-opacity-60`
-                  : currentStep > s.n ? 'text-emerald-400' : 'text-gray-600'
-              }`}>
-                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                  currentStep > s.n ? 'bg-emerald-500 text-white'
-                    : currentStep === s.n ? `${c.bg} ${c.text} border ${c.ring}`
-                    : 'bg-white/5 text-gray-600'
-                }`}>
-                  {currentStep > s.n ? <CheckCircle2 size={14} /> : s.n}
-                </span>
-                {s.label}
+      {/* ── Main interface ── */}
+      <div style={{ position: 'relative', zIndex: 1, maxWidth: '1280px', margin: '0 auto', padding: '7rem 1.5rem 5rem' }}>
+
+        {/* Step tracker */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+          style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.25rem', marginBottom: '3rem' }}>
+          {[{ n: 1, label: 'Select Model' }, { n: 2, label: 'Upload Video' }, { n: 3, label: 'View Results' }].map((s, i) => (
+            <div key={s.n} style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '0.625rem', padding: '0.5rem 1rem', borderRadius: '99px',
+                backgroundColor: currentStep === s.n ? '#1a1a1a' : currentStep > s.n ? 'rgba(249,115,22,0.08)' : 'transparent',
+                border: currentStep === s.n ? '1px solid #1a1a1a' : currentStep > s.n ? '1px solid rgba(249,115,22,0.3)' : '1px solid #cccccc',
+                transition: 'all 0.3s',
+              }}>
+                <div style={{
+                  width: '22px', height: '22px', borderRadius: '50%', flexShrink: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  backgroundColor: currentStep === s.n ? '#f97316' : currentStep > s.n ? 'rgba(249,115,22,0.15)' : '#e0e0e0',
+                  fontSize: '0.6875rem', fontWeight: '700',
+                  color: currentStep === s.n ? '#fff' : currentStep > s.n ? '#f97316' : '#888',
+                }}>
+                  {currentStep > s.n ? <CheckCircle2 size={13} /> : s.n}
+                </div>
+                <span style={{
+                  fontSize: '0.8125rem', fontWeight: '600',
+                  color: currentStep === s.n ? '#ffffff' : currentStep > s.n ? '#f97316' : '#888888',
+                  whiteSpace: 'nowrap',
+                }}>{s.label}</span>
               </div>
-              {i < STEPS.length - 1 && (
-                <div className={`w-8 h-px mx-1 transition-all duration-500 ${currentStep > s.n ? 'bg-emerald-500/50' : 'bg-white/10'}`} />
-              )}
+              {i < 2 && <div style={{ width: '2.5rem', height: '1px', backgroundColor: currentStep > s.n ? '#f97316' : '#cccccc', margin: '0 0.125rem', opacity: 0.5, transition: 'background-color 0.4s' }} />}
             </div>
           ))}
-        </div>
+        </motion.div>
 
         {/* ── Model Selector ── */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-8">
-          <p className="text-xs text-gray-600 uppercase tracking-widest font-medium mb-3">Choose Model</p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} style={{ marginBottom: '2rem' }}>
+          <p style={{ fontSize: '0.6875rem', color: '#888888', textTransform: 'uppercase', letterSpacing: '0.12em', fontFamily: 'monospace', marginBottom: '0.875rem' }}>
+            — 01 · select model
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
             {Object.values(MODELS).map((m) => {
-              const Icon = m.icon;
-              const col  = COLOR[m.color];
+              const Icon   = m.icon;
               const active = selectedModel === m.id;
               return (
-                <motion.button key={m.id} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+                <motion.button key={m.id} whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }}
                   onClick={() => handleModelChange(m.id)} disabled={processing}
-                  className={`relative text-left rounded-xl border p-4 transition-all duration-200 cursor-pointer overflow-hidden ${
-                    active ? `${col.ring} ${col.bg}` : 'border-white/8 bg-white/2 hover:border-white/15'
-                  }`}
+                  style={{
+                    textAlign: 'left', borderRadius: '16px', padding: '1.375rem',
+                    border: active ? '1.5px solid #1a1a1a' : '1px solid #cccccc',
+                    backgroundColor: active ? '#1a1a1a' : '#f0f0f0',
+                    cursor: processing ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s', position: 'relative', overflow: 'hidden',
+                    boxShadow: active ? '0 8px 32px rgba(0,0,0,0.18)' : '0 1px 4px rgba(0,0,0,0.04)',
+                  }}
                 >
-                  {active && (
-                    <motion.div layoutId="model-glow" className="absolute inset-0 pointer-events-none"
-                      style={{ background: `radial-gradient(ellipse at top left, ${m.accent}18 0%, transparent 70%)` }} />
-                  )}
-                  <div className="flex items-start justify-between mb-3">
-                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${active ? col.bg : 'bg-white/5'}`}>
-                      <Icon size={18} className={active ? col.text : 'text-gray-500'} />
+                  {active && <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: `radial-gradient(ellipse at top left, ${m.accent}22 0%, transparent 65%)` }} />}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                    <div style={{
+                      width: '42px', height: '42px', borderRadius: '11px',
+                      backgroundColor: `${m.accent}${active ? '22' : '14'}`,
+                      border: `1px solid ${m.accent}${active ? '40' : '22'}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Icon size={19} style={{ color: m.accent }} />
                     </div>
-                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                      active ? `${col.bg} ${col.text}` : 'bg-white/5 text-gray-600'
-                    }`}>{m.tag}</span>
+                    <span style={{
+                      fontSize: '0.625rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em',
+                      padding: '3px 9px', borderRadius: '99px',
+                      backgroundColor: active ? `${m.accent}22` : 'rgba(0,0,0,0.06)',
+                      color: active ? m.accent : '#999999',
+                      border: `1px solid ${active ? m.accent + '30' : 'transparent'}`,
+                    }}>{m.tag}</span>
                   </div>
-                  <p className={`font-semibold text-sm leading-snug mb-1 ${active ? 'text-white' : 'text-gray-400'}`}>{m.label}</p>
-                  <p className="text-xs text-gray-600 mb-3 leading-relaxed">{m.description}</p>
-                  <div className="flex items-center gap-3">
-                    <span className={`text-xs font-bold ${active ? col.text : 'text-gray-600'}`}>{m.accuracy}</span>
-                    <span className="text-gray-700 text-xs">·</span>
-                    <span className="text-xs text-gray-600">{m.vocab}</span>
+                  <p style={{ fontSize: '0.875rem', fontWeight: '700', letterSpacing: '-0.01em', lineHeight: 1.3, color: active ? '#ffffff' : '#1a1a1a', marginBottom: '0.375rem' }}>{m.label}</p>
+                  <p style={{ fontSize: '0.75rem', color: active ? '#888' : '#777', lineHeight: '1.55', marginBottom: '0.875rem' }}>{m.description}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '0.8125rem', fontWeight: '700', color: m.accent }}>{m.accuracy}</span>
+                    <span style={{ width: '3px', height: '3px', borderRadius: '50%', backgroundColor: active ? '#555' : '#ccc' }} />
+                    <span style={{ fontSize: '0.75rem', color: active ? '#777' : '#999' }}>{m.vocab}</span>
                   </div>
                 </motion.button>
               );
             })}
           </div>
 
-          {/* ── Fusion Sub-Selector (shown only when fusion category is active) ── */}
+          {/* Fusion sub-selector */}
           <AnimatePresence>
             {selectedModel === 'fusion' && (
-              <motion.div
-                key="fusion-sub"
+              <motion.div key="fusion-sub"
                 initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
+                animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
                 exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                className="overflow-hidden"
+                style={{ overflow: 'hidden' }}
               >
-                <p className="text-xs text-gray-600 uppercase tracking-widest font-medium mb-3">Choose Fusion Strategy</p>
-                <div className="grid sm:grid-cols-3 gap-3">
+                <p style={{ fontSize: '0.6875rem', color: '#888888', textTransform: 'uppercase', letterSpacing: '0.12em', fontFamily: 'monospace', marginBottom: '0.875rem' }}>
+                  — fusion strategy
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                   {Object.values(FUSION_SUBMODELS).map((fm) => {
-                    const FIcon = fm.icon;
-                    const fcol  = COLOR[fm.color];
+                    const FIcon   = fm.icon;
                     const factive = selectedFusion === fm.id;
                     return (
-                      <motion.button key={fm.id} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+                      <motion.button key={fm.id} whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }}
                         onClick={() => handleFusionChange(fm.id)} disabled={processing}
-                        className={`relative text-left rounded-xl border p-4 transition-all duration-200 cursor-pointer overflow-hidden ${
-                          factive ? `${fcol.ring} ${fcol.bg}` : 'border-white/8 bg-white/2 hover:border-white/15'
-                        }`}
+                        style={{
+                          textAlign: 'left', borderRadius: '16px', padding: '1.25rem',
+                          border: factive ? '1.5px solid #1a1a1a' : '1px solid #cccccc',
+                          backgroundColor: factive ? '#1a1a1a' : '#f0f0f0',
+                          cursor: processing ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.2s', position: 'relative', overflow: 'hidden',
+                          boxShadow: factive ? '0 8px 32px rgba(0,0,0,0.18)' : '0 1px 4px rgba(0,0,0,0.04)',
+                        }}
                       >
-                        {factive && (
-                          <motion.div layoutId="fusion-sub-glow" className="absolute inset-0 pointer-events-none"
-                            style={{ background: `radial-gradient(ellipse at top left, ${fm.accent}18 0%, transparent 70%)` }} />
-                        )}
-                        <div className="flex items-start justify-between mb-2">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${factive ? fcol.bg : 'bg-white/5'}`}>
-                            <FIcon size={16} className={factive ? fcol.text : 'text-gray-500'} />
+                        {factive && <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: `radial-gradient(ellipse at top left, ${fm.accent}22 0%, transparent 65%)` }} />}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                          <div style={{
+                            width: '38px', height: '38px', borderRadius: '10px',
+                            backgroundColor: `${fm.accent}${factive ? '22' : '14'}`,
+                            border: `1px solid ${fm.accent}${factive ? '40' : '22'}`,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            <FIcon size={17} style={{ color: fm.accent }} />
                           </div>
-                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                            factive ? `${fcol.bg} ${fcol.text}` : 'bg-white/5 text-gray-600'
-                          }`}>{fm.tag}</span>
+                          <span style={{
+                            fontSize: '0.625rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em',
+                            padding: '2px 8px', borderRadius: '99px',
+                            backgroundColor: factive ? `${fm.accent}22` : 'rgba(0,0,0,0.06)',
+                            color: factive ? fm.accent : '#999',
+                          }}>{fm.tag}</span>
                         </div>
-                        <p className={`font-semibold text-sm leading-snug mb-1 ${factive ? 'text-white' : 'text-gray-400'}`}>{fm.label}</p>
-                        <p className="text-xs text-gray-600 mb-2 leading-relaxed">{fm.description}</p>
-                        <span className={`text-xs font-bold ${factive ? fcol.text : 'text-gray-600'}`}>{fm.accuracy}</span>
+                        <p style={{ fontSize: '0.875rem', fontWeight: '700', letterSpacing: '-0.01em', color: factive ? '#ffffff' : '#1a1a1a', marginBottom: '0.3rem' }}>{fm.label}</p>
+                        <p style={{ fontSize: '0.75rem', color: factive ? '#888' : '#777', lineHeight: '1.5' }}>{fm.description}</p>
                       </motion.button>
                     );
                   })}
@@ -416,37 +409,48 @@ const Demo = () => {
           {/* PROCESSING */}
           {processing && (
             <motion.div key="processing" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}
-              className="rounded-2xl border border-white/10 bg-white/3 p-10">
-              <div className="flex flex-col items-center text-center mb-10">
-                <div className={`w-16 h-16 rounded-2xl ${c.bg} border ${c.ring} flex items-center justify-center mb-5`}>
-                  <Loader2 size={28} className={`${c.text} animate-spin`} />
+              style={{ backgroundColor: '#f0f0f0', border: '1px solid #cccccc', borderRadius: '20px', padding: '3rem 2rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '2.5rem' }}>
+                <div style={{
+                  width: '68px', height: '68px', borderRadius: '18px', marginBottom: '1.25rem',
+                  backgroundColor: `${activeAccent}12`, border: `1.5px solid ${activeAccent}28`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Loader2 size={30} style={{ color: activeAccent, animation: 'spin 1s linear infinite' }} />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-1">Analysing your video</h3>
-                <p className="text-sm text-gray-500">{selectedModel === 'fusion' ? activeFusion.label : model.label}</p>
+                <h3 style={{ fontSize: '1.375rem', fontWeight: '800', color: '#1a1a1a', letterSpacing: '-0.02em', marginBottom: '0.3rem' }}>
+                  Analysing your video
+                </h3>
+                <p style={{ fontSize: '0.875rem', color: '#888888', fontFamily: 'monospace' }}>
+                  {selectedModel === 'fusion' ? activeFusion.label : model.label}
+                </p>
               </div>
-              <div className="max-w-md mx-auto space-y-4">
+              <div style={{ maxWidth: '460px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
                 {PROCESS_STAGES.map((s, i) => {
                   const done   = stage > i + 1;
                   const active = stage === i + 1;
                   return (
-                    <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.08 }}
-                      className={`flex items-center gap-4 rounded-xl px-4 py-3 border transition-all ${
-                        done   ? 'border-emerald-500/30 bg-emerald-500/5' :
-                        active ? `${c.ring} ${c.bg} border-opacity-50`   :
-                                 'border-white/5 bg-transparent'
-                      }`}>
-                      <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
-                        done ? 'bg-emerald-500' : active ? `${c.bg} border ${c.ring}` : 'bg-white/5'
-                      }`}>
-                        {done   ? <CheckCircle2 size={14} className="text-white" />              :
-                         active ? <Loader2 size={12} className={`${c.text} animate-spin`} />    :
-                                  <span className="text-[10px] text-gray-600">{i + 1}</span>}
+                    <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.08 }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '1rem',
+                        borderRadius: '12px', padding: '0.875rem 1.125rem', transition: 'all 0.3s',
+                        border: done ? '1px solid rgba(34,197,94,0.3)' : active ? `1px solid ${activeAccent}30` : '1px solid #e4e4e4',
+                        backgroundColor: done ? 'rgba(34,197,94,0.06)' : active ? `${activeAccent}08` : 'transparent',
+                      }}>
+                      <div style={{
+                        width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        backgroundColor: done ? '#22c55e' : active ? `${activeAccent}15` : '#e4e4e4',
+                        border: active ? `1px solid ${activeAccent}40` : 'none',
+                      }}>
+                        {done   ? <CheckCircle2 size={14} style={{ color: '#fff' }} />
+                               : active ? <Loader2 size={12} style={{ color: activeAccent, animation: 'spin 1s linear infinite' }} />
+                               : <span style={{ fontSize: '0.625rem', color: '#aaa', fontWeight: '600' }}>{i + 1}</span>}
                       </div>
-                      <span className={`text-sm font-medium ${done ? 'text-emerald-400' : active ? 'text-white' : 'text-gray-600'}`}>
+                      <span style={{ fontSize: '0.875rem', fontWeight: '600', color: done ? '#22c55e' : active ? '#1a1a1a' : '#aaaaaa' }}>
                         {s.label}
                       </span>
-                      {done && <CheckCircle2 size={14} className="text-emerald-500 ml-auto" />}
+                      {done && <CheckCircle2 size={13} style={{ color: '#22c55e', marginLeft: 'auto' }} />}
                     </motion.div>
                   );
                 })}
@@ -457,56 +461,78 @@ const Demo = () => {
           {/* RESULT */}
           {result && !processing && (
             <motion.div key="result" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}
-              className="space-y-4">
+              style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
-              {/* Big prediction — full width */}
-              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-                className={`rounded-2xl border ${c.ring} border-opacity-40 ${c.bg} p-8 flex flex-col justify-center`}
-                style={{ boxShadow: `0 0 60px ${activeAccent}18` }}>
-                <div className="flex items-center gap-2 mb-4">
-                  <div className={`w-2 h-2 rounded-full ${c.bar} animate-pulse`} />
-                  <span className="text-xs uppercase tracking-widest text-gray-500 font-medium">Top Prediction</span>
+              {/* Big prediction — dark hero card */}
+              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+                style={{
+                  backgroundColor: '#1a1a1a', borderRadius: '20px',
+                  border: `1px solid ${activeAccent}30`,
+                  padding: 'clamp(2rem,4vw,3rem)',
+                  boxShadow: `0 24px 64px rgba(0,0,0,0.18), 0 0 0 1px ${activeAccent}10`,
+                  position: 'relative', overflow: 'hidden',
+                }}>
+                <div style={{ position: 'absolute', top: 0, right: 0, width: '320px', height: '320px', pointerEvents: 'none', background: `radial-gradient(circle at top right, ${activeAccent}20 0%, transparent 60%)` }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: activeAccent }} />
+                  <span style={{ fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#555555', fontFamily: 'monospace' }}>top prediction</span>
                 </div>
-                <div className={`text-6xl md:text-7xl font-black tracking-tight uppercase mb-4 ${c.text}`}
-                  style={{ textShadow: `0 0 40px ${activeAccent}60` }}>
-                  {result.top_prediction}
-                </div>
-                <div className="text-sm text-gray-400">
-                  Confidence: <span className="text-white font-bold text-lg">{result.confidence}%</span>
-                </div>
-                <div className="mt-5 h-2 bg-white/5 rounded-full overflow-hidden">
-                  <motion.div initial={{ width: 0 }} animate={{ width: `${result.confidence}%` }}
-                    transition={{ duration: 0.8, ease: 'easeOut' }}
-                    className={`h-full rounded-full ${c.bar}`}
-                    style={{ boxShadow: `0 0 10px ${activeAccent}` }} />
+                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+                  style={{
+                    fontSize: 'clamp(4rem, 10vw, 7.5rem)', fontWeight: '900', letterSpacing: '-0.04em',
+                    textTransform: 'uppercase', color: '#ffffff', lineHeight: 0.88, marginBottom: '1.75rem',
+                    textShadow: `0 0 80px ${activeAccent}45`,
+                  }}>
+                  {result.top_prediction}<span style={{ color: activeAccent }}>.</span>
+                </motion.div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+                  <div>
+                    <span style={{ fontSize: '0.6875rem', color: '#555', fontFamily: 'monospace', display: 'block', marginBottom: '2px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>confidence</span>
+                    <span style={{ fontSize: '2.25rem', fontWeight: '900', color: activeAccent, letterSpacing: '-0.04em' }}>{result.confidence}%</span>
+                  </div>
+                  <div style={{ flex: 1, minWidth: '160px' }}>
+                    <div style={{ height: '8px', backgroundColor: '#2a2a2a', borderRadius: '4px', overflow: 'hidden' }}>
+                      <motion.div initial={{ width: 0 }} animate={{ width: `${result.confidence}%` }}
+                        transition={{ duration: 0.9, ease: 'easeOut', delay: 0.2 }}
+                        style={{ height: '100%', borderRadius: '4px', backgroundColor: activeAccent, boxShadow: `0 0 12px ${activeAccent}80` }} />
+                    </div>
+                  </div>
                 </div>
               </motion.div>
 
-              {/* Top-5 */}
-              <div className="rounded-2xl border border-white/8 bg-white/3 p-6">
-                <p className="text-xs uppercase tracking-widest text-gray-600 font-medium mb-5">Top 5 Candidates</p>
-                <div className="space-y-3">
+              {/* Top-5 list */}
+              <div style={{ backgroundColor: '#f0f0f0', border: '1px solid #cccccc', borderRadius: '20px', padding: '1.75rem 2rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+                  <p style={{ fontSize: '0.6875rem', color: '#888888', textTransform: 'uppercase', letterSpacing: '0.12em', fontFamily: 'monospace', margin: 0 }}>
+                    — top 5 candidates
+                  </p>
+                  <p style={{ fontSize: '0.6875rem', color: '#aaaaaa', fontFamily: 'monospace', margin: 0 }}>
+                    click a row to select for download
+                  </p>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
                   {result.top5.map((item, i) => (
                     <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.3 + i * 0.07 }}
+                      transition={{ delay: 0.25 + i * 0.07 }}
                       onClick={() => setSelectedWord(item.word)}
-                      className={`flex items-center gap-4 rounded-xl px-4 py-3 border transition-all cursor-pointer ${
-                        selectedWord === item.word
-                          ? `${c.ring} ${c.bg} border-opacity-50`
-                          : 'border-white/6 bg-white/2 hover:border-white/20'
-                      }`}>
-                      <span className={`text-xs font-bold w-5 text-center ${i === 0 ? c.text : 'text-gray-700'}`}>
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '1rem',
+                        borderRadius: '12px', padding: '0.875rem 1.125rem', cursor: 'pointer', transition: 'all 0.15s',
+                        border: selectedWord === item.word ? `1.5px solid ${activeAccent}50` : i === 0 ? '1px solid #cccccc' : '1px solid #e4e4e4',
+                        backgroundColor: selectedWord === item.word ? `${activeAccent}08` : i === 0 ? '#e8e8e8' : '#fafafa',
+                      }}>
+                      <span style={{ fontSize: '0.6875rem', fontWeight: '700', width: '20px', textAlign: 'center', fontFamily: 'monospace', color: i === 0 ? activeAccent : '#aaaaaa' }}>
                         {i === 0 ? '✓' : `#${i + 1}`}
                       </span>
-                      <span className={`font-semibold uppercase tracking-wide text-sm w-28 shrink-0 ${i === 0 ? 'text-white' : 'text-gray-400'}`}>
+                      <span style={{ fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: '0.875rem', minWidth: '100px', color: i === 0 ? '#1a1a1a' : '#555555' }}>
                         {item.word}
                       </span>
-                      <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                      <div style={{ flex: 1, height: '6px', backgroundColor: '#e0e0e0', borderRadius: '3px', overflow: 'hidden' }}>
                         <motion.div initial={{ width: 0 }} animate={{ width: `${item.confidence}%` }}
-                          transition={{ duration: 0.6, delay: 0.35 + i * 0.07, ease: 'easeOut' }}
-                          className={`h-full rounded-full ${i === 0 ? c.bar : 'bg-white/20'}`} />
+                          transition={{ duration: 0.6, delay: 0.3 + i * 0.07, ease: 'easeOut' }}
+                          style={{ height: '100%', borderRadius: '3px', backgroundColor: i === 0 ? activeAccent : '#bbbbbb' }} />
                       </div>
-                      <span className={`text-sm font-medium w-12 text-right ${i === 0 ? c.text : 'text-gray-600'}`}>
+                      <span style={{ fontSize: '0.875rem', fontWeight: '700', minWidth: '3.5rem', textAlign: 'right', fontFamily: 'monospace', color: i === 0 ? activeAccent : '#888888' }}>
                         {item.confidence}%
                       </span>
                     </motion.div>
@@ -514,86 +540,145 @@ const Demo = () => {
                 </div>
               </div>
 
-              {/* Try another */}
-              <div className="flex justify-end">
-                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-                  onClick={reset}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/8 text-sm font-medium text-gray-300 hover:text-white transition-all cursor-pointer">
-                  <RefreshCw size={15} />
-                  Try Another
-                </motion.button>
+              {/* Model badge + Reset + Download */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', backgroundColor: '#f0f0f0', border: '1px solid #cccccc', borderRadius: '10px', padding: '0.625rem 1rem' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: activeAccent }} />
+                  <span style={{ fontSize: '0.8125rem', fontWeight: '600', color: '#555555' }}>
+                    {selectedModel === 'fusion' ? activeFusion.label : model.label}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flexWrap: 'wrap' }}>
+                  {subtitleError && (
+                    <span style={{ fontSize: '0.75rem', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      <AlertCircle size={12} /> {subtitleError}
+                    </span>
+                  )}
+                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+                    onClick={handleDownload} disabled={subtitleDownloading || !selectedWord}
+                    title={!selectedWord ? 'Select a word from the list above' : `Download with "${selectedWord}" subtitle`}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.625rem 1.25rem',
+                      borderRadius: '10px', border: `1px solid ${activeAccent}`,
+                      backgroundColor: subtitleDownloading || !selectedWord ? 'transparent' : `${activeAccent}12`,
+                      color: subtitleDownloading || !selectedWord ? '#aaaaaa' : activeAccent,
+                      fontSize: '0.875rem', fontWeight: '600',
+                      cursor: subtitleDownloading || !selectedWord ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s',
+                      borderColor: subtitleDownloading || !selectedWord ? '#cccccc' : activeAccent,
+                    }}>
+                    {subtitleDownloading
+                      ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Burning…</>
+                      : <><Download size={14} /> Download with Subtitle</>}
+                  </motion.button>
+                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={reset}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.625rem 1.375rem',
+                      borderRadius: '10px', backgroundColor: '#1a1a1a', border: '1px solid #1a1a1a',
+                      color: '#ffffff', fontSize: '0.875rem', fontWeight: '600', cursor: 'pointer', transition: 'background-color 0.2s',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#333')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#1a1a1a')}
+                  >
+                    <RefreshCw size={14} /> Try Another
+                  </motion.button>
+                </div>
               </div>
             </motion.div>
           )}
 
-          {/* UPLOAD (default state) */}
+          {/* UPLOAD (default) */}
           {!processing && !result && (
             <motion.div key="upload" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}
-              className="space-y-4">
+              style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
-              <div className="rounded-2xl border border-white/10 bg-white/3 p-6">
-                <p className="text-xs uppercase tracking-widest text-gray-600 font-medium mb-4">Upload Video</p>
-                <Uploader key={uploadKey} onFileSelect={handleFileSelect} disabled={processing} />
-
+              {/* Upload card */}
+              <div style={{ backgroundColor: '#f0f0f0', border: '1px solid #cccccc', borderRadius: '20px', padding: '2rem' }}>
+                <p style={{ fontSize: '0.6875rem', color: '#888888', textTransform: 'uppercase', letterSpacing: '0.12em', fontFamily: 'monospace', marginBottom: '1.25rem' }}>
+                  — 02 · upload video
+                </p>
+                <Uploader key={uploadKey} onFileSelect={handleFileSelect} disabled={processing} accent={activeAccent} />
                 {file && (
-                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-5 flex justify-end">
-                    <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                      onClick={handleProcess}
-                      className={`flex items-center gap-2.5 px-6 py-3 rounded-xl font-semibold text-sm text-white cursor-pointer transition-all ${c.bar} hover:opacity-90`}
-                      style={{ boxShadow: `0 4px 20px ${activeAccent}40` }}>
-                      <Play size={16} fill="white" />
-                      Analyse Video
+                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={handleProcess}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.875rem 2rem',
+                        borderRadius: '10px', backgroundColor: '#1a1a1a', border: 'none',
+                        color: '#ffffff', fontSize: '0.9375rem', fontWeight: '700', cursor: 'pointer',
+                        letterSpacing: '-0.01em', boxShadow: `0 4px 24px ${activeAccent}35`, transition: 'background-color 0.2s',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#333')}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#1a1a1a')}
+                    >
+                      <Play size={16} fill="white" style={{ color: '#fff' }} /> Analyse Video
                     </motion.button>
                   </motion.div>
                 )}
               </div>
 
+              {/* Error */}
               <AnimatePresence>
                 {error && (
                   <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                    className="rounded-2xl border border-red-500/30 bg-red-500/8 px-5 py-4 flex items-start gap-3">
-                    <AlertCircle size={18} className="text-red-400 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-semibold text-red-300 mb-0.5">Something went wrong</p>
-                      <p className="text-xs text-red-400/80">{error}</p>
+                    style={{
+                      backgroundColor: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.25)',
+                      borderRadius: '14px', padding: '1.125rem 1.5rem',
+                      display: 'flex', alignItems: 'flex-start', gap: '0.875rem',
+                    }}>
+                    <AlertCircle size={18} style={{ color: '#ef4444', flexShrink: 0, marginTop: '1px' }} />
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: '0.875rem', fontWeight: '700', color: '#dc2626', marginBottom: '0.2rem' }}>
+                        {error === '__network__' ? 'Server unreachable' : 'Something went wrong'}
+                      </p>
+                      <p style={{ fontSize: '0.8125rem', color: '#ef4444', opacity: 0.85 }}>
+                        {error === '__network__'
+                          ? 'The backend server may be waking up (cold start). Please wait a few seconds and try again.'
+                          : error}
+                      </p>
+                      {error === '__network__' && (
+                        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+                          onClick={handleProcess} disabled={!file}
+                          style={{
+                            marginTop: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.375rem',
+                            padding: '0.4rem 0.875rem', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.4)',
+                            backgroundColor: 'rgba(239,68,68,0.08)', color: '#dc2626',
+                            fontSize: '0.8125rem', fontWeight: '600', cursor: 'pointer',
+                          }}>
+                          <RefreshCw size={12} /> Retry
+                        </motion.button>
+                      )}
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              <div className="rounded-2xl border border-white/8 bg-white/2 p-6">
-                <p className="text-xs uppercase tracking-widest text-gray-600 font-medium mb-5">Tips for Best Results</p>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-2.5">
-                    <p className={`text-xs font-semibold uppercase tracking-wider mb-3 ${c.text}`}>Recording</p>
-                    {[
-                      'Say a single word clearly and at normal pace',
-                      'Face the camera straight-on, well lit',
-                      'Lips and mouth fully visible — no mask/hand',
-                      'Keep duration between 1 and 3 seconds',
-                    ].map((t) => (
-                      <div key={t} className="flex items-start gap-2 text-sm text-gray-500">
-                        <span className={`mt-1.5 w-1 h-1 rounded-full ${c.bar} shrink-0`} />
-                        {t}
+              {/* Tips card */}
+              <div style={{ backgroundColor: '#f0f0f0', border: '1px solid #cccccc', borderRadius: '20px', padding: '2rem' }}>
+                <p style={{ fontSize: '0.6875rem', color: '#888888', textTransform: 'uppercase', letterSpacing: '0.12em', fontFamily: 'monospace', marginBottom: '1.5rem' }}>
+                  — tips for best results
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '2rem' }}>
+                  <div>
+                    <p style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em', color: activeAccent, marginBottom: '1rem' }}>Recording</p>
+                    {['Say a single word clearly and at normal pace', 'Face the camera straight-on, well lit', 'Lips and mouth fully visible — no mask or hand', 'Keep duration between 1 and 3 seconds'].map((t) => (
+                      <div key={t} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.625rem', marginBottom: '0.625rem' }}>
+                        <div style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: activeAccent, flexShrink: 0, marginTop: '7px' }} />
+                        <span style={{ fontSize: '0.875rem', color: '#555555', lineHeight: '1.55' }}>{t}</span>
                       </div>
                     ))}
                   </div>
-                  <div className="space-y-2.5">
-                    <p className="text-xs font-semibold uppercase tracking-wider mb-3 text-purple-400">Technical</p>
-                    {[
-                      'Format: MP4, MOV, AVI, MKV, WebM',
-                      'Max file size: 50 MB',
-                      'Recommended resolution: 480p or higher',
-                      'Landmarks models need a clearly visible face',
-                    ].map((t) => (
-                      <div key={t} className="flex items-start gap-2 text-sm text-gray-500">
-                        <span className="mt-1.5 w-1 h-1 rounded-full bg-purple-500 shrink-0" />
-                        {t}
+                  <div>
+                    <p style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#888888', marginBottom: '1rem' }}>Technical</p>
+                    {['Format: MP4, MOV, AVI, MKV, WebM', 'Max file size: 50 MB', 'Recommended resolution: 480p or higher', 'Landmarks models need a clearly visible face'].map((t) => (
+                      <div key={t} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.625rem', marginBottom: '0.625rem' }}>
+                        <div style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#cccccc', flexShrink: 0, marginTop: '7px' }} />
+                        <span style={{ fontSize: '0.875rem', color: '#777777', lineHeight: '1.55' }}>{t}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
+
             </motion.div>
           )}
 

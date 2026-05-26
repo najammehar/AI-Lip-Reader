@@ -229,30 +229,30 @@ const experiments = [
 
 /* ─── Tag styles ─────────────────────────────────────────────────── */
 const TAG = {
-  indigo: { bg:'rgba(99,102,241,0.15)',  border:'rgba(99,102,241,0.4)',  text:'#a5b4fc' },
-  green:  { bg:'rgba(34,197,94,0.13)',   border:'rgba(34,197,94,0.4)',   text:'#86efac' },
-  red:    { bg:'rgba(239,68,68,0.13)',   border:'rgba(239,68,68,0.4)',   text:'#fca5a5' },
-  orange: { bg:'rgba(249,115,22,0.13)',  border:'rgba(249,115,22,0.4)',  text:'#fdba74' },
-  purple: { bg:'rgba(168,85,247,0.13)',  border:'rgba(168,85,247,0.4)',  text:'#d8b4fe' },
-  blue:   { bg:'rgba(59,130,246,0.13)',  border:'rgba(59,130,246,0.4)',  text:'#93c5fd' },
-  gray:   { bg:'rgba(156,163,175,0.10)', border:'rgba(156,163,175,0.3)', text:'#d1d5db' },
+  indigo: { bg:'rgba(99,102,241,0.1)',   border:'rgba(99,102,241,0.35)',  text:'#4f46e5' },
+  green:  { bg:'rgba(34,197,94,0.1)',    border:'rgba(34,197,94,0.35)',   text:'#16a34a' },
+  red:    { bg:'rgba(239,68,68,0.1)',    border:'rgba(239,68,68,0.35)',   text:'#dc2626' },
+  orange: { bg:'rgba(249,115,22,0.1)',   border:'rgba(249,115,22,0.35)',  text:'#ea580c' },
+  purple: { bg:'rgba(168,85,247,0.1)',   border:'rgba(168,85,247,0.35)',  text:'#9333ea' },
+  blue:   { bg:'rgba(59,130,246,0.1)',   border:'rgba(59,130,246,0.35)',  text:'#2563eb' },
+  gray:   { bg:'rgba(107,114,128,0.08)', border:'rgba(107,114,128,0.25)', text:'#6b7280' },
 };
 
 const BORDER = {
-  positive:'rgba(99,102,241,0.35)',
-  negative:'rgba(239,68,68,0.25)',
-  neutral: 'rgba(255,255,255,0.08)',
+  positive:'rgba(99,102,241,0.45)',
+  negative:'rgba(239,68,68,0.45)',
+  neutral: '#cccccc',
 };
 const CARD_BG = {
-  positive:'linear-gradient(160deg,rgba(99,102,241,0.07) 0%,rgba(139,92,246,0.04) 100%)',
-  negative:'linear-gradient(160deg,rgba(239,68,68,0.06) 0%,rgba(249,115,22,0.03) 100%)',
-  neutral: 'linear-gradient(160deg,rgba(255,255,255,0.03) 0%,rgba(255,255,255,0.01) 100%)',
+  positive:'linear-gradient(160deg,rgba(99,102,241,0.05) 0%,rgba(139,92,246,0.02) 100%)',
+  negative:'linear-gradient(160deg,rgba(239,68,68,0.05) 0%,rgba(249,115,22,0.02) 100%)',
+  neutral: 'none',
 };
 
 /* ─── Trend badge ────────────────────────────────────────────────── */
 function Trend({ trend, val }) {
   if (!val || val === '—') return null;
-  const c = { up:'#86efac', down:'#fca5a5', neutral:'#9ca3af' }[trend];
+  const c = { up:'#16a34a', down:'#dc2626', neutral:'#888888' }[trend];
   const I = { up: TrendingUp, down: TrendingDown, neutral: Minus }[trend];
   return (
     <span style={{ display:'flex', alignItems:'center', gap:3, color:c, fontWeight:700, fontSize:'0.82rem' }}>
@@ -271,7 +271,7 @@ function Modal({ exp, onClose }) {
       onClick={onClose}
       style={{
         position:'fixed', inset:0, zIndex:999,
-        background:'rgba(0,0,0,0.8)', backdropFilter:'blur(8px)',
+        background:'rgba(0,0,0,0.45)', backdropFilter:'blur(8px)',
         display:'flex', alignItems:'center', justifyContent:'center',
         padding:'1rem',
       }}
@@ -284,7 +284,7 @@ function Modal({ exp, onClose }) {
         onClick={e => e.stopPropagation()}
         style={{
           width:'100%', maxWidth:1280, maxHeight:'88vh', overflowY:'auto',
-          background:'#141414',
+          background:'#fafafa',
           border:`1px solid ${BORDER[exp.outcome]}`,
           borderRadius:20,
           padding:'2rem 2.25rem',
@@ -295,8 +295,8 @@ function Modal({ exp, onClose }) {
         {/* Close */}
         <button onClick={onClose} style={{
           position:'absolute', top:16, right:16,
-          background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)',
-          borderRadius:8, padding:'5px 7px', cursor:'pointer', color:'#9ca3af',
+          background:'rgba(0,0,0,0.05)', border:'1px solid #dddddd',
+          borderRadius:8, padding:'5px 7px', cursor:'pointer', color:'#888888',
           display:'flex', alignItems:'center', lineHeight:0,
         }}>
           <X size={16}/>
@@ -319,7 +319,7 @@ function Modal({ exp, onClose }) {
                 background:tag.bg, border:`1px solid ${tag.border}`, color:tag.text,
               }}>{exp.tag}</span>
             </div>
-            <h2 style={{ fontSize:'1.2rem', fontWeight:700, color:'#f9fafb', lineHeight:1.3, margin:0 }}>{exp.name}</h2>
+            <h2 style={{ fontSize:'1.2rem', fontWeight:700, color:'#1a1a1a', lineHeight:1.3, margin:0 }}>{exp.name}</h2>
           </div>
         </div>
 
@@ -333,11 +333,11 @@ function Modal({ exp, onClose }) {
             exp.trainAcc ? { label:'Train Acc', val: exp.trainAcc } : null,
           ].filter(Boolean).map((s,i) => (
             <div key={i} style={{
-              background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.07)',
+              background:'rgba(0,0,0,0.04)', border:'1px solid #e0e0e0',
               borderRadius:10, padding:'0.55rem 0.85rem',
             }}>
-              <div style={{ fontSize:'0.62rem', color:'#6b7280', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:3 }}>{s.label}</div>
-              <div style={{ fontSize:'0.95rem', fontWeight:700, color: s.accent ? '#a5b4fc' : '#e5e7eb' }}>{s.val}</div>
+              <div style={{ fontSize:'0.62rem', color:'#888888', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:3 }}>{s.label}</div>
+              <div style={{ fontSize:'0.95rem', fontWeight:700, color: s.accent ? '#4f46e5' : '#1a1a1a' }}>{s.val}</div>
             </div>
           ))}
         </div>
@@ -352,11 +352,11 @@ function Modal({ exp, onClose }) {
             <div style={{ fontSize:'0.68rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.09em', color:s.color, marginBottom:'0.35rem' }}>{s.title}</div>
             {s.mono
               ? <div style={{
-                  background:'rgba(0,0,0,0.35)', border:'1px solid rgba(255,255,255,0.07)',
+                  background:'rgba(0,0,0,0.04)', border:'1px solid #e0e0e0',
                   borderRadius:8, padding:'0.7rem 1rem',
-                  fontFamily:'monospace', fontSize:'0.78rem', color:'#c4b5fd', lineHeight:1.7,
+                  fontFamily:'monospace', fontSize:'0.78rem', color:'#4f46e5', lineHeight:1.7,
                 }}>{s.text}</div>
-              : <p style={{ color:'#d1d5db', lineHeight:1.75, fontSize:'0.91rem', margin:0 }}>{s.text}</p>
+              : <p style={{ color:'#333333', lineHeight:1.75, fontSize:'0.91rem', margin:0 }}>{s.text}</p>
             }
           </div>
         ))}
@@ -380,10 +380,10 @@ function ExpCard({ exp, onClick }) {
       }}
     >
       <div style={{
-        background: hov ? '#1a1a2e' : '#111111',
-        border:`1px solid ${hov ? '#6366f1' : BORDER[exp.outcome]}`,
+        background: hov ? '#e8e8e8' : '#f0f0f0',
+        border:`1px solid ${hov ? '#1a1a1a' : BORDER[exp.outcome]}`,
         borderRadius:14, padding:'1rem 1.1rem',
-        boxShadow: hov ? '0 0 28px rgba(99,102,241,0.18)' : 'none',
+        boxShadow: hov ? '0 4px 20px rgba(0,0,0,0.12)' : 'none',
         transition:'background 0.2s, border-color 0.2s, box-shadow 0.2s',
         position:'relative', overflow:'hidden',
       }}>
@@ -402,12 +402,12 @@ function ExpCard({ exp, onClick }) {
             }}>{exp.tag}</span>
           </div>
 
-          <div style={{ fontSize:'0.85rem', fontWeight:700, color:'#f3f4f6', lineHeight:1.35, marginBottom:'0.5rem' }}>
+          <div style={{ fontSize:'0.85rem', fontWeight:700, color:'#1a1a1a', lineHeight:1.35, marginBottom:'0.5rem' }}>
             {exp.name}
           </div>
 
           <div style={{ display:'flex', alignItems:'center', gap:'0.55rem', flexWrap:'wrap' }}>
-            <span style={{ fontSize:'0.68rem', color:'#6b7280', background:'rgba(255,255,255,0.05)', padding:'2px 7px', borderRadius:5 }}>
+            <span style={{ fontSize:'0.68rem', color:'#888888', background:'rgba(0,0,0,0.06)', padding:'2px 7px', borderRadius:5 }}>
               {exp.dataset}
             </span>
             <Trend trend={exp.trend} val={exp.valAcc}/>
@@ -419,7 +419,7 @@ function ExpCard({ exp, onClick }) {
 
         <div style={{
           position:'absolute', right:10, top:'50%', transform:'translateY(-50%)',
-          color:'#6366f1', opacity: hov ? 0.7 : 0.2, transition:'opacity 0.2s',
+          color:'#f97316', opacity: hov ? 0.8 : 0.25, transition:'opacity 0.2s',
         }}>
           <ChevronRight size={17}/>
         </div>
@@ -433,10 +433,16 @@ export default function Experiments() {
   const [selected, setSelected] = useState(null);
 
   return (
-    <div style={{ minHeight:'100vh', background:'#0a0a0a', color:'white' }}>
+    <div style={{ minHeight:'100vh', backgroundColor:'#e8e8e8', color:'#1a1a1a', position:'relative' }}>
+      {/* Grid background */}
+      <div style={{
+        position:'fixed', inset:0, pointerEvents:'none', zIndex:0,
+        backgroundImage:'linear-gradient(#cccccc 1px, transparent 1px), linear-gradient(90deg, #cccccc 1px, transparent 1px)',
+        backgroundSize:'60px 60px', opacity:0.25,
+      }}/>
 
       {/* HEADER */}
-      <section style={{ paddingTop:112, paddingBottom:56, paddingInline:24, borderBottom:'1px solid #1f1f1f' }}>
+      <section style={{ position:'relative', zIndex:1, paddingTop:112, paddingBottom:56, paddingInline:24, borderBottom:'1px solid #cccccc' }}>
         <div style={{ maxWidth:1280, margin:'0 auto' }}>
 
 
@@ -444,25 +450,22 @@ export default function Experiments() {
             <div style={{
               display:'inline-flex', alignItems:'center', gap:8,
               padding:'5px 14px', borderRadius:99,
-              background:'rgba(99,102,241,0.1)', border:'1px solid rgba(99,102,241,0.25)',
+              background:'rgba(249,115,22,0.1)', border:'1px solid rgba(249,115,22,0.3)',
               marginBottom:18,
             }}>
-              <FlaskConical size={13} color="#818cf8"/>
-              <span style={{ fontSize:'0.8rem', fontWeight:600, color:'#a5b4fc' }}>Experimental Journey</span>
+              <FlaskConical size={13} color="#f97316"/>
+              <span style={{ fontSize:'0.8rem', fontWeight:600, color:'#ea580c' }}>Experimental Journey</span>
             </div>
 
             <h1 style={{
-              fontSize:'clamp(1.9rem,5vw,3.25rem)', fontWeight:800, lineHeight:1.15,
-              marginBottom:14, letterSpacing:'-0.02em',
+              fontSize:'clamp(1.9rem,5vw,3.25rem)', fontWeight:900, lineHeight:1.15,
+              marginBottom:14, letterSpacing:'-0.02em', color:'#1a1a1a',
             }}>
               Experiments{' '}
-              <span style={{
-                background:'linear-gradient(to right,#6366f1,#8b5cf6)',
-                WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text',
-              }}>& Results</span>
+              <span style={{ color:'#f97316' }}>{'&'} Results</span>
             </h1>
 
-            <p style={{ fontSize:'1rem', color:'#9ca3af', maxWidth:580, lineHeight:1.75, marginBottom:28 }}>
+            <p style={{ fontSize:'1rem', color:'#555555', maxWidth:580, lineHeight:1.75, marginBottom:28 }}>
               A systematic ablation study spanning LRW-100 and LRW-500. Click any experiment card
               to explore the full pipeline, findings, and metrics.
             </p>
@@ -471,9 +474,9 @@ export default function Experiments() {
       </section>
 
       {/* LEGEND */}
-      <div style={{ maxWidth:860, margin:'0 auto', padding:'1.25rem 1.5rem 0' }}>
+      <div style={{ maxWidth:860, margin:'0 auto', padding:'1.25rem 1.5rem 0', position:'relative', zIndex:1 }}>
         <div style={{ display:'flex', alignItems:'center', gap:'1.1rem', flexWrap:'wrap' }}>
-          <span style={{ fontSize:'0.68rem', color:'#4b5563', textTransform:'uppercase', letterSpacing:'0.08em', fontWeight:600 }}>Legend</span>
+          <span style={{ fontSize:'0.68rem', color:'#888888', textTransform:'uppercase', letterSpacing:'0.08em', fontWeight:600 }}>Legend</span>
           {[
             { c:BORDER.positive, l:'Positive result' },
             { c:BORDER.negative, l:'Regression / failed' },
@@ -481,16 +484,16 @@ export default function Experiments() {
           ].map((x,i) => (
             <div key={i} style={{ display:'flex', alignItems:'center', gap:5 }}>
               <div style={{ width:10, height:10, borderRadius:3, border:`2px solid ${x.c}`, flexShrink:0 }}/>
-              <span style={{ fontSize:'0.73rem', color:'#9ca3af' }}>{x.l}</span>
+              <span style={{ fontSize:'0.73rem', color:'#666666' }}>{x.l}</span>
             </div>
           ))}
           <div style={{ marginLeft:'auto', display:'flex', gap:'0.9rem', flexWrap:'wrap' }}>
             {[
-              { I:<TrendingUp  size={11} style={{color:'#86efac'}}/>, l:'Improved' },
-              { I:<TrendingDown size={11} style={{color:'#fca5a5'}}/>, l:'Dropped'  },
-              { I:<Minus       size={11} style={{color:'#6b7280'}}/>, l:'Neutral'  },
+              { I:<TrendingUp  size={11} style={{color:'#16a34a'}}/>, l:'Improved' },
+              { I:<TrendingDown size={11} style={{color:'#dc2626'}}/>, l:'Dropped'  },
+              { I:<Minus       size={11} style={{color:'#888888'}}/>, l:'Neutral'  },
             ].map((x,i) => (
-              <span key={i} style={{ display:'flex', alignItems:'center', gap:4, fontSize:'0.73rem', color:'#9ca3af' }}>
+              <span key={i} style={{ display:'flex', alignItems:'center', gap:4, fontSize:'0.73rem', color:'#666666' }}>
                 {x.I}{x.l}
               </span>
             ))}
@@ -499,14 +502,14 @@ export default function Experiments() {
       </div>
 
       {/* TIMELINE */}
-      <section style={{ padding:'3.5rem 1.5rem 6rem' }}>
+      <section style={{ padding:'3.5rem 1.5rem 6rem', position:'relative', zIndex:1 }}>
         <div style={{ maxWidth:860, margin:'0 auto', position:'relative' }}>
 
           {/* ── vertical line ── */}
           <div style={{
             position:'absolute', left:'50%', top:0, bottom:80, width:2,
             transform:'translateX(-50%)',
-            background:'linear-gradient(to bottom,transparent 0%,#4f46e5 5%,#7c3aed 50%,#4f46e5 95%,transparent 100%)',
+            background:'linear-gradient(to bottom,transparent 0%,#1a1a1a 5%,#1a1a1a 95%,transparent 100%)',
             borderRadius:99, zIndex:0,
           }}/>
 
@@ -553,10 +556,10 @@ export default function Experiments() {
                       style={{
                         all:'unset', cursor:'pointer',
                         width:38, height:38, borderRadius:'50%',
-                        background:'linear-gradient(135deg,#6366f1,#8b5cf6)',
-                        border:'3px solid #0a0a0a',
+                        background:'#1a1a1a',
+                        border:'3px solid #e8e8e8',
                         display:'flex', alignItems:'center', justifyContent:'center',
-                        boxShadow:'0 0 14px rgba(99,102,241,0.5)',
+                        boxShadow:'0 0 14px rgba(0,0,0,0.2)',
                         flexShrink:0, zIndex:2,
                       }}
                     >
@@ -596,13 +599,13 @@ export default function Experiments() {
           >
             <div style={{
               width:46, height:46, borderRadius:'50%',
-              background:'linear-gradient(135deg,#6366f1,#8b5cf6)',
+              background:'#1a1a1a',
               display:'flex', alignItems:'center', justifyContent:'center',
-              boxShadow:'0 0 26px rgba(99,102,241,0.55)',
+              boxShadow:'0 4px 20px rgba(0,0,0,0.15)',
             }}>
               <BarChart3 size={19} color="white"/>
             </div>
-            <span style={{ fontSize:'0.78rem', color:'#6b7280', fontWeight:500 }}>Dual-Stream Fusion</span>
+            <span style={{ fontSize:'0.78rem', color:'#888888', fontWeight:500 }}>Dual-Stream Fusion</span>
           </motion.div>
         </div>
       </section>
