@@ -2,7 +2,7 @@ Aim: To create a dual stream architecture for visual lip reading. The architectu
 
 What we need:
 LRW (word-level, controlled)
-├── Appearance-only baseline
+├── Appearance-only baseline 
 ├── Landmark-only baseline        ← we have this (42%)
 ├── Dual-stream fusion result
 └── Ablation: each component's contribution
