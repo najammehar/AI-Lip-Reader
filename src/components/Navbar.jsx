@@ -143,7 +143,13 @@ const Navbar = () => {
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.2 }}
               className="md:hidden"
-              style={{ overflow: 'hidden', marginTop: '0.75rem' }}
+              style={{
+                overflow: 'hidden', marginTop: '0.75rem',
+                backgroundColor: '#e8e8e8',
+                borderRadius: '12px',
+                border: '1px solid #cccccc',
+                padding: '0.5rem',
+              }}
             >
               {links.map(({ path, label }) => (
                 <Link

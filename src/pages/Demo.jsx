@@ -1,5 +1,5 @@
 // ─── DEMO PAGE — redesigned to match Home theme ───────────────────────────────
-import { useState, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, CheckCircle2, AlertCircle, Loader2, Cpu, Crosshair,
@@ -62,7 +62,7 @@ const PROCESS_STAGES = [
 ];
 
 // ── Uploader ───────────────────────────────────────────────────────────────────
-const Uploader = ({ onFileSelect, disabled, accent = '#f97316' }) => {
+const Uploader = ({ onFileSelect, disabled, accent = '#f97316', isMobile = false }) => {
   const [localFile, setLocalFile] = useState(null);
   const [drag, setDrag] = useState(false);
   const [err, setErr] = useState('');
@@ -103,7 +103,7 @@ const Uploader = ({ onFileSelect, disabled, accent = '#f97316' }) => {
           {!localFile ? (
             <motion.label key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               htmlFor="vid-input"
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3.5rem 1.5rem', cursor: disabled ? 'not-allowed' : 'pointer', userSelect: 'none' }}>
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '1.75rem 1rem' : '3.5rem 1.5rem', cursor: disabled ? 'not-allowed' : 'pointer', userSelect: 'none' }}>
               <motion.div whileHover={{ scale: 1.06 }} style={{
                 width: '72px', height: '72px', marginBottom: '1.25rem', borderRadius: '16px',
                 backgroundColor: `${accent}10`, border: `1.5px solid ${accent}25`,
@@ -164,6 +164,14 @@ const Demo = () => {
   const [selectedWord,   setSelectedWord]   = useState(null);
   const [subtitleDownloading, setSubtitleDownloading] = useState(false);
   const [subtitleError,  setSubtitleError]  = useState('');
+  const [isMobile,       setIsMobile]       = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const model        = MODELS[selectedModel];
   const activeFusion = FUSION_SUBMODELS[selectedFusion];
@@ -238,7 +246,8 @@ const Demo = () => {
         throw new Error(d.detail || d.error || `Server error ${response.status}`);
       }
       const data = await response.json();
-      setStage(4); setResult(data); setSelectedWord(data.top_prediction);
+      setStage(4); setResult(data);
+      setSelectedWord(data.top_prediction);
     } catch (err) {
       const msg = err.message || '';
       const isNetwork = msg.includes('fetch') || msg.includes('NetworkError') || msg.includes('Failed to fetch');
@@ -271,27 +280,28 @@ const Demo = () => {
           {[{ n: 1, label: 'Select Model' }, { n: 2, label: 'Upload Video' }, { n: 3, label: 'View Results' }].map((s, i) => (
             <div key={s.n} style={{ display: 'flex', alignItems: 'center' }}>
               <div style={{
-                display: 'flex', alignItems: 'center', gap: '0.625rem', padding: '0.5rem 1rem', borderRadius: '99px',
+                display: 'flex', alignItems: 'center', gap: isMobile ? '0.375rem' : '0.625rem',
+                padding: isMobile ? '0.375rem 0.625rem' : '0.5rem 1rem', borderRadius: '99px',
                 backgroundColor: currentStep === s.n ? '#1a1a1a' : currentStep > s.n ? 'rgba(249,115,22,0.08)' : 'transparent',
                 border: currentStep === s.n ? '1px solid #1a1a1a' : currentStep > s.n ? '1px solid rgba(249,115,22,0.3)' : '1px solid #cccccc',
                 transition: 'all 0.3s',
               }}>
                 <div style={{
-                  width: '22px', height: '22px', borderRadius: '50%', flexShrink: 0,
+                  width: isMobile ? '17px' : '22px', height: isMobile ? '17px' : '22px', borderRadius: '50%', flexShrink: 0,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   backgroundColor: currentStep === s.n ? '#f97316' : currentStep > s.n ? 'rgba(249,115,22,0.15)' : '#e0e0e0',
-                  fontSize: '0.6875rem', fontWeight: '700',
+                  fontSize: '0.6rem', fontWeight: '700',
                   color: currentStep === s.n ? '#fff' : currentStep > s.n ? '#f97316' : '#888',
                 }}>
-                  {currentStep > s.n ? <CheckCircle2 size={13} /> : s.n}
+                  {currentStep > s.n ? <CheckCircle2 size={isMobile ? 10 : 13} /> : s.n}
                 </div>
                 <span style={{
-                  fontSize: '0.8125rem', fontWeight: '600',
+                  fontSize: isMobile ? '0.7rem' : '0.8125rem', fontWeight: '600',
                   color: currentStep === s.n ? '#ffffff' : currentStep > s.n ? '#f97316' : '#888888',
                   whiteSpace: 'nowrap',
                 }}>{s.label}</span>
               </div>
-              {i < 2 && <div style={{ width: '2.5rem', height: '1px', backgroundColor: currentStep > s.n ? '#f97316' : '#cccccc', margin: '0 0.125rem', opacity: 0.5, transition: 'background-color 0.4s' }} />}
+              {i < 2 && <div style={{ width: isMobile ? '1rem' : '2.5rem', height: '1px', backgroundColor: currentStep > s.n ? '#f97316' : '#cccccc', margin: '0 0.125rem', opacity: 0.5, transition: 'background-color 0.4s' }} />}
             </div>
           ))}
         </motion.div>
@@ -301,51 +311,113 @@ const Demo = () => {
           <p style={{ fontSize: '0.6875rem', color: '#888888', textTransform: 'uppercase', letterSpacing: '0.12em', fontFamily: 'monospace', marginBottom: '0.875rem' }}>
             — 01 · select model
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-            {Object.values(MODELS).map((m) => {
-              const Icon   = m.icon;
-              const active = selectedModel === m.id;
-              return (
-                <motion.button key={m.id} whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }}
-                  onClick={() => handleModelChange(m.id)} disabled={processing}
-                  style={{
-                    textAlign: 'left', borderRadius: '16px', padding: '1.375rem',
-                    border: active ? '1.5px solid #1a1a1a' : '1px solid #cccccc',
-                    backgroundColor: active ? '#1a1a1a' : '#f0f0f0',
-                    cursor: processing ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.2s', position: 'relative', overflow: 'hidden',
-                    boxShadow: active ? '0 8px 32px rgba(0,0,0,0.18)' : '0 1px 4px rgba(0,0,0,0.04)',
-                  }}
-                >
-                  {active && <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: `radial-gradient(ellipse at top left, ${m.accent}22 0%, transparent 65%)` }} />}
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                    <div style={{
-                      width: '42px', height: '42px', borderRadius: '11px',
-                      backgroundColor: `${m.accent}${active ? '22' : '14'}`,
-                      border: `1px solid ${m.accent}${active ? '40' : '22'}`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <Icon size={19} style={{ color: m.accent }} />
+          {/* ── Desktop model grid ── */}
+          {!isMobile && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+              {Object.values(MODELS).map((m) => {
+                const Icon   = m.icon;
+                const active = selectedModel === m.id;
+                return (
+                  <motion.button key={m.id} whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }}
+                    onClick={() => handleModelChange(m.id)} disabled={processing}
+                    style={{
+                      textAlign: 'left', borderRadius: '16px', padding: '1.375rem',
+                      border: active ? '1.5px solid #1a1a1a' : '1px solid #cccccc',
+                      backgroundColor: active ? '#1a1a1a' : '#f0f0f0',
+                      cursor: processing ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s', position: 'relative', overflow: 'hidden',
+                      boxShadow: active ? '0 8px 32px rgba(0,0,0,0.18)' : '0 1px 4px rgba(0,0,0,0.04)',
+                    }}
+                  >
+                    {active && <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: `radial-gradient(ellipse at top left, ${m.accent}22 0%, transparent 65%)` }} />}
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                      <div style={{
+                        width: '42px', height: '42px', borderRadius: '11px',
+                        backgroundColor: `${m.accent}${active ? '22' : '14'}`,
+                        border: `1px solid ${m.accent}${active ? '40' : '22'}`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <Icon size={19} style={{ color: m.accent }} />
+                      </div>
+                      <span style={{
+                        fontSize: '0.625rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em',
+                        padding: '3px 9px', borderRadius: '99px',
+                        backgroundColor: active ? `${m.accent}22` : 'rgba(0,0,0,0.06)',
+                        color: active ? m.accent : '#999999',
+                        border: `1px solid ${active ? m.accent + '30' : 'transparent'}`,
+                      }}>{m.tag}</span>
                     </div>
-                    <span style={{
-                      fontSize: '0.625rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em',
-                      padding: '3px 9px', borderRadius: '99px',
-                      backgroundColor: active ? `${m.accent}22` : 'rgba(0,0,0,0.06)',
-                      color: active ? m.accent : '#999999',
-                      border: `1px solid ${active ? m.accent + '30' : 'transparent'}`,
-                    }}>{m.tag}</span>
+                    <p style={{ fontSize: '0.875rem', fontWeight: '700', letterSpacing: '-0.01em', lineHeight: 1.3, color: active ? '#ffffff' : '#1a1a1a', marginBottom: '0.375rem' }}>{m.label}</p>
+                    <p style={{ fontSize: '0.75rem', color: active ? '#888' : '#777', lineHeight: '1.55', marginBottom: '0.875rem' }}>{m.description}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '0.8125rem', fontWeight: '700', color: m.accent }}>{m.accuracy}</span>
+                      <span style={{ width: '3px', height: '3px', borderRadius: '50%', backgroundColor: active ? '#555' : '#ccc' }} />
+                      <span style={{ fontSize: '0.75rem', color: active ? '#777' : '#999' }}>{m.vocab}</span>
+                    </div>
+                  </motion.button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* ── Mobile model picker ── */}
+          {isMobile && (
+            <div>
+              {/* Horizontal scrollable pills */}
+              <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem', scrollbarWidth: 'none' }}>
+                {Object.values(MODELS).map((m) => {
+                  const active = selectedModel === m.id;
+                  return (
+                    <motion.button key={m.id} whileTap={{ scale: 0.95 }}
+                      onClick={() => handleModelChange(m.id)} disabled={processing}
+                      style={{
+                        flexShrink: 0, whiteSpace: 'nowrap',
+                        display: 'flex', alignItems: 'center', gap: '0.375rem',
+                        padding: '0.5rem 1rem', borderRadius: '99px',
+                        border: active ? `1.5px solid ${m.accent}` : '1px solid #cccccc',
+                        backgroundColor: active ? m.accent : '#f0f0f0',
+                        color: active ? '#fff' : '#555555',
+                        fontWeight: '600', fontSize: '0.875rem',
+                        cursor: processing ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      <span style={{
+                        fontSize: '0.55rem', fontWeight: '800', textTransform: 'uppercase',
+                        letterSpacing: '0.06em', opacity: 0.75,
+                      }}>{m.tag}</span>
+                      {m.label}
+                    </motion.button>
+                  );
+                })}
+              </div>
+              {/* Selected model info strip */}
+              <div style={{
+                marginTop: '0.75rem',
+                backgroundColor: '#1a1a1a', borderRadius: '14px',
+                padding: '1rem 1.125rem',
+                display: 'flex', alignItems: 'flex-start', gap: '0.875rem',
+                border: `1px solid ${model.accent}30`,
+              }}>
+                <div style={{
+                  width: '38px', height: '38px', borderRadius: '10px', flexShrink: 0,
+                  backgroundColor: `${model.accent}22`, border: `1px solid ${model.accent}40`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <model.icon size={17} style={{ color: model.accent }} />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: '0.9rem', fontWeight: '700', color: '#ffffff', marginBottom: '0.25rem' }}>{model.label}</p>
+                  <p style={{ fontSize: '0.75rem', color: '#888888', lineHeight: 1.5 }}>{model.description}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+                    <span style={{ fontSize: '0.8125rem', fontWeight: '700', color: model.accent }}>{model.accuracy}</span>
+                    <span style={{ width: '3px', height: '3px', borderRadius: '50%', backgroundColor: '#555' }} />
+                    <span style={{ fontSize: '0.7rem', color: '#666' }}>{model.vocab}</span>
                   </div>
-                  <p style={{ fontSize: '0.875rem', fontWeight: '700', letterSpacing: '-0.01em', lineHeight: 1.3, color: active ? '#ffffff' : '#1a1a1a', marginBottom: '0.375rem' }}>{m.label}</p>
-                  <p style={{ fontSize: '0.75rem', color: active ? '#888' : '#777', lineHeight: '1.55', marginBottom: '0.875rem' }}>{m.description}</p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '0.8125rem', fontWeight: '700', color: m.accent }}>{m.accuracy}</span>
-                    <span style={{ width: '3px', height: '3px', borderRadius: '50%', backgroundColor: active ? '#555' : '#ccc' }} />
-                    <span style={{ fontSize: '0.75rem', color: active ? '#777' : '#999' }}>{m.vocab}</span>
-                  </div>
-                </motion.button>
-              );
-            })}
-          </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Fusion sub-selector */}
           <AnimatePresence>
@@ -359,7 +431,8 @@ const Demo = () => {
                 <p style={{ fontSize: '0.6875rem', color: '#888888', textTransform: 'uppercase', letterSpacing: '0.12em', fontFamily: 'monospace', marginBottom: '0.875rem' }}>
                   — fusion strategy
                 </p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                {/* Desktop fusion grid */}
+                {!isMobile && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                   {Object.values(FUSION_SUBMODELS).map((fm) => {
                     const FIcon   = fm.icon;
                     const factive = selectedFusion === fm.id;
@@ -397,7 +470,35 @@ const Demo = () => {
                       </motion.button>
                     );
                   })}
-                </div>
+                </div>}
+
+                {/* Mobile fusion pills */}
+                {isMobile && (
+                  <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', scrollbarWidth: 'none' }}>
+                    {Object.values(FUSION_SUBMODELS).map((fm) => {
+                      const factive = selectedFusion === fm.id;
+                      return (
+                        <motion.button key={fm.id} whileTap={{ scale: 0.95 }}
+                          onClick={() => handleFusionChange(fm.id)} disabled={processing}
+                          style={{
+                            flexShrink: 0, whiteSpace: 'nowrap',
+                            display: 'flex', alignItems: 'center', gap: '0.375rem',
+                            padding: '0.5rem 1rem', borderRadius: '99px',
+                            border: factive ? `1.5px solid ${fm.accent}` : '1px solid #cccccc',
+                            backgroundColor: factive ? fm.accent : '#f0f0f0',
+                            color: factive ? '#fff' : '#555555',
+                            fontWeight: '600', fontSize: '0.875rem',
+                            cursor: processing ? 'not-allowed' : 'pointer',
+                            transition: 'all 0.2s',
+                          }}
+                        >
+                          <span style={{ fontSize: '0.55rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.06em', opacity: 0.75 }}>{fm.tag}</span>
+                          {fm.label}
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -468,40 +569,44 @@ const Demo = () => {
                 style={{
                   backgroundColor: '#1a1a1a', borderRadius: '20px',
                   border: `1px solid ${activeAccent}30`,
-                  padding: 'clamp(2rem,4vw,3rem)',
+                  padding: isMobile ? '1.25rem' : 'clamp(2rem,4vw,3rem)',
                   boxShadow: `0 24px 64px rgba(0,0,0,0.18), 0 0 0 1px ${activeAccent}10`,
                   position: 'relative', overflow: 'hidden',
                 }}>
                 <div style={{ position: 'absolute', top: 0, right: 0, width: '320px', height: '320px', pointerEvents: 'none', background: `radial-gradient(circle at top right, ${activeAccent}20 0%, transparent 60%)` }} />
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
                   <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: activeAccent }} />
-                  <span style={{ fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#555555', fontFamily: 'monospace' }}>top prediction</span>
+                  <span style={{ fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#555555', fontFamily: 'monospace' }}>
+                    top prediction
+                  </span>
                 </div>
                 <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
                   style={{
-                    fontSize: 'clamp(4rem, 10vw, 7.5rem)', fontWeight: '900', letterSpacing: '-0.04em',
-                    textTransform: 'uppercase', color: '#ffffff', lineHeight: 0.88, marginBottom: '1.75rem',
+                    fontSize: isMobile ? 'clamp(2rem, 10vw, 3.5rem)' : 'clamp(4rem, 10vw, 7.5rem)',
+                    fontWeight: '900', letterSpacing: '-0.04em',
+                    textTransform: 'uppercase', color: '#ffffff', lineHeight: 0.95, marginBottom: '1.75rem',
                     textShadow: `0 0 80px ${activeAccent}45`,
                   }}>
-                  {result.top_prediction}<span style={{ color: activeAccent }}>.</span>
+                  {result.top_prediction}
+                  <span style={{ color: activeAccent }}>.</span>
                 </motion.div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
-                  <div>
-                    <span style={{ fontSize: '0.6875rem', color: '#555', fontFamily: 'monospace', display: 'block', marginBottom: '2px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>confidence</span>
-                    <span style={{ fontSize: '2.25rem', fontWeight: '900', color: activeAccent, letterSpacing: '-0.04em' }}>{result.confidence}%</span>
-                  </div>
-                  <div style={{ flex: 1, minWidth: '160px' }}>
-                    <div style={{ height: '8px', backgroundColor: '#2a2a2a', borderRadius: '4px', overflow: 'hidden' }}>
-                      <motion.div initial={{ width: 0 }} animate={{ width: `${result.confidence}%` }}
-                        transition={{ duration: 0.9, ease: 'easeOut', delay: 0.2 }}
-                        style={{ height: '100%', borderRadius: '4px', backgroundColor: activeAccent, boxShadow: `0 0 12px ${activeAccent}80` }} />
+                    <div>
+                      <span style={{ fontSize: '0.6875rem', color: '#555', fontFamily: 'monospace', display: 'block', marginBottom: '2px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>confidence</span>
+                      <span style={{ fontSize: isMobile ? '1.75rem' : '2.25rem', fontWeight: '900', color: activeAccent, letterSpacing: '-0.04em' }}>{result.confidence}%</span>
+                    </div>
+                    <div style={{ flex: 1, minWidth: '160px' }}>
+                      <div style={{ height: '8px', backgroundColor: '#2a2a2a', borderRadius: '4px', overflow: 'hidden' }}>
+                        <motion.div initial={{ width: 0 }} animate={{ width: `${result.confidence}%` }}
+                          transition={{ duration: 0.9, ease: 'easeOut', delay: 0.2 }}
+                          style={{ height: '100%', borderRadius: '4px', backgroundColor: activeAccent, boxShadow: `0 0 12px ${activeAccent}80` }} />
+                      </div>
                     </div>
                   </div>
-                </div>
               </motion.div>
 
               {/* Top-5 list */}
-              <div style={{ backgroundColor: '#f0f0f0', border: '1px solid #cccccc', borderRadius: '20px', padding: '1.75rem 2rem' }}>
+              <div style={{ backgroundColor: '#f0f0f0', border: '1px solid #cccccc', borderRadius: '20px', padding: isMobile ? '1.25rem 1rem' : '1.75rem 2rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
                   <p style={{ fontSize: '0.6875rem', color: '#888888', textTransform: 'uppercase', letterSpacing: '0.12em', fontFamily: 'monospace', margin: 0 }}>
                     — top 5 candidates
@@ -524,7 +629,7 @@ const Demo = () => {
                       <span style={{ fontSize: '0.6875rem', fontWeight: '700', width: '20px', textAlign: 'center', fontFamily: 'monospace', color: i === 0 ? activeAccent : '#aaaaaa' }}>
                         {i === 0 ? '✓' : `#${i + 1}`}
                       </span>
-                      <span style={{ fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: '0.875rem', minWidth: '100px', color: i === 0 ? '#1a1a1a' : '#555555' }}>
+                      <span style={{ fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: '0.875rem', minWidth: isMobile ? '70px' : '100px', color: i === 0 ? '#1a1a1a' : '#555555' }}>
                         {item.word}
                       </span>
                       <div style={{ flex: 1, height: '6px', backgroundColor: '#e0e0e0', borderRadius: '3px', overflow: 'hidden' }}>
@@ -538,7 +643,7 @@ const Demo = () => {
                     </motion.div>
                   ))}
                 </div>
-              </div>
+                </div>
 
               {/* Model badge + Reset + Download */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
@@ -555,22 +660,22 @@ const Demo = () => {
                     </span>
                   )}
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-                    onClick={handleDownload} disabled={subtitleDownloading || !selectedWord}
-                    title={!selectedWord ? 'Select a word from the list above' : `Download with "${selectedWord}" subtitle`}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.625rem 1.25rem',
-                      borderRadius: '10px', border: `1px solid ${activeAccent}`,
-                      backgroundColor: subtitleDownloading || !selectedWord ? 'transparent' : `${activeAccent}12`,
-                      color: subtitleDownloading || !selectedWord ? '#aaaaaa' : activeAccent,
-                      fontSize: '0.875rem', fontWeight: '600',
-                      cursor: subtitleDownloading || !selectedWord ? 'not-allowed' : 'pointer',
-                      transition: 'all 0.2s',
-                      borderColor: subtitleDownloading || !selectedWord ? '#cccccc' : activeAccent,
-                    }}>
-                    {subtitleDownloading
-                      ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Burning…</>
-                      : <><Download size={14} /> Download with Subtitle</>}
-                  </motion.button>
+                      onClick={handleDownload} disabled={subtitleDownloading || !selectedWord}
+                      title={!selectedWord ? 'Select a word from the list above' : `Download with "${selectedWord}" subtitle`}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.625rem 1.25rem',
+                        borderRadius: '10px', border: `1px solid ${activeAccent}`,
+                        backgroundColor: subtitleDownloading || !selectedWord ? 'transparent' : `${activeAccent}12`,
+                        color: subtitleDownloading || !selectedWord ? '#aaaaaa' : activeAccent,
+                        fontSize: '0.875rem', fontWeight: '600',
+                        cursor: subtitleDownloading || !selectedWord ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s',
+                        borderColor: subtitleDownloading || !selectedWord ? '#cccccc' : activeAccent,
+                      }}>
+                      {subtitleDownloading
+                        ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Burning…</>
+                        : <><Download size={14} /> Download with Subtitle</>}
+                    </motion.button>
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={reset}
                     style={{
                       display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.625rem 1.375rem',
@@ -597,7 +702,7 @@ const Demo = () => {
                 <p style={{ fontSize: '0.6875rem', color: '#888888', textTransform: 'uppercase', letterSpacing: '0.12em', fontFamily: 'monospace', marginBottom: '1.25rem' }}>
                   — 02 · upload video
                 </p>
-                <Uploader key={uploadKey} onFileSelect={handleFileSelect} disabled={processing} accent={activeAccent} />
+                <Uploader key={uploadKey} onFileSelect={handleFileSelect} disabled={processing} accent={activeAccent} isMobile={isMobile} />
                 {file && (
                   <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
                     <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={handleProcess}

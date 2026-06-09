@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Video, Zap, Globe, Play, BookOpen, CheckCircle2, Eye, ChevronDown } from 'lucide-react';
+import { ArrowRight, Video, Zap, Globe, Play, BookOpen, CheckCircle2, Eye, ChevronDown, Camera, Film, Bot, VolumeX } from 'lucide-react';
 
 const predictions = [
   { word: 'ABOUT',    pct: 94, color: '#f97316' },
@@ -38,7 +38,7 @@ const MockPrediction = () => (
       <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'rgba(239,68,68,0.6)' }} />
       <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'rgba(234,179,8,0.6)' }} />
       <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'rgba(34,197,94,0.6)' }} />
-      <span style={{ marginLeft: '12px', fontSize: '11px', color: '#888888', fontFamily: 'monospace' }}>LipReader — inference output</span>
+      <span style={{ marginLeft: '12px', fontSize: '11px', color: '#888888', fontFamily: 'monospace' }}>LipReader / inference output</span>
     </div>
 
     <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -121,19 +121,19 @@ const Home = () => {
     {
       icon: Video,
       title: 'Read Lips, Not Audio',
-      description: 'Upload any short video of someone speaking and the system figures out the word — purely from the movement of their lips.',
+      description: 'Upload any short video of someone speaking and the system works out the word from how their lips move. That is it.',
       accent: '#f97316',
     },
     {
       icon: Eye,
       title: 'Two Eyes Are Better Than One',
-      description: 'The system looks at the scene from two angles at once — texture and shape — then combines what it sees for a more confident answer.',
+      description: 'The system looks at both the texture of the image and the shape of the lips at the same time, then puts the two together to make a stronger prediction.',
       accent: '#ea580c',
     },
     {
       icon: Zap,
       title: 'Instant Results',
-      description: 'Predictions come back in milliseconds. No waiting, no buffering — just a ranked list of the most likely words the speaker said.',
+      description: 'Predictions come back in milliseconds. No waiting, no buffering, just a ranked list of the most likely words the speaker said.',
       accent: '#c2410c',
     },
     {
@@ -161,23 +161,23 @@ const Home = () => {
   const useCases = [
     {
       title: 'Surveillance & Security',
-      description: 'Security cameras capture everything — including conversations. LipReader can help make sense of what was said in footage where audio was never recorded.',
-      image: '📷',
+      description: 'Security cameras capture everything, including conversations. LipReader can help decode what was said in footage where audio was never recorded.',
+      icon: Camera,
     },
     {
       title: 'Recovering Corrupted Audio',
-      description: 'Old recordings, damaged files, interference-heavy footage — when the audio is gone or unusable, the video still holds the answer.',
-      image: '🎬',
+      description: 'Old recordings, damaged files, interference-heavy footage. When the audio is gone or too corrupted to use, the video can still give you the answer.',
+      icon: Film,
     },
     {
       title: 'Robots in Noisy Environments',
-      description: 'Factory floors, construction sites, loud public spaces — robots can read your lips to understand commands when a microphone would be useless.',
-      image: '🤖',
+      description: 'On factory floors, construction sites, and loud public spaces, a microphone is basically useless. Reading lips gets the job done instead.',
+      icon: Bot,
     },
     {
       title: 'Silent Communication',
-      description: "Mouth a word, get a response. No wake word, no speaking aloud — ideal for situations where silence matters or audio hardware isn't available.",
-      image: '🤫',
+      description: 'Mouth a word, get a response. No wake word, no speaking out loud. Works great anywhere silence matters or a microphone is not an option.',
+      icon: VolumeX,
     },
   ];
 
@@ -231,7 +231,7 @@ const Home = () => {
               </h1>
 
               <p style={{ fontSize: '1.0625rem', color: '#555555', lineHeight: '1.65', maxWidth: '440px', marginBottom: '2.5rem' }}>
-                An AI system that watches a video of someone speaking and tells you what word they said — no microphone, no audio, no guesswork.
+                A system that watches a short video of someone speaking and tells you what word they said. No microphone. No audio. Just the video.
               </p>
 
               <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
@@ -452,7 +452,7 @@ const Home = () => {
                   {/* ── BOTTOM STATUS BAR ── */}
                   <rect x="0" y="280" width="360" height="20" fill="#e8e8e8" />
                   <line x1="0" y1="280" x2="360" y2="280" stroke="#cccccc" strokeWidth="0.5" />
-                  <text x="14" y="293" fontSize="7.5" fill="#888888" fontFamily="monospace">50 landmarks · 29 frames · dual-stream</text>
+                  <text x="14" y="293" fontSize="7.5" fill="#888888" fontFamily="monospace">50 landmarks · 29 frames</text>
                   <circle cx="340" cy="290" r="3.5" fill="#f97316" opacity="0.85" />
                   <text x="334" y="293" textAnchor="end" fontSize="7.5" fill="#f97316" fontFamily="monospace">live</text>
                 </svg>
@@ -524,7 +524,7 @@ const Home = () => {
               How It Works
             </h2>
             <p style={{ fontSize: '1.125rem', color: '#666666', maxWidth: '480px', lineHeight: '1.6' }}>
-              Four ideas that make silent lip reading fast, accurate, and practical.
+              Four core ideas behind how the system works.
             </p>
           </motion.div>
 
@@ -575,14 +575,14 @@ const Home = () => {
                 Try It<br />Yourself
               </h2>
               <p style={{ fontSize: '1.0625rem', color: '#555555', lineHeight: '1.65', marginBottom: '2rem' }}>
-                Upload a clip of someone speaking — and see the word prediction appear in real time.
+                Upload a short clip of someone speaking and watch the word prediction come back almost instantly.
               </p>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '2.5rem' }}>
                 {[
                   { label: 'Drop in a video', desc: "Any short clip where the speaker's face is visible and front-facing" },
                   { label: 'The system analyses the lips', desc: 'It watches every frame and picks up on the shape and movement of the mouth' },
-                  { label: 'Get a ranked prediction', desc: 'See the top matches with confidence scores — the most likely word sits at the top' },
+                  { label: 'Get a ranked prediction', desc: 'See the top matches with confidence scores, with the most likely word sitting at the top' },
                 ].map(({ label, desc }, i) => (
                   <div key={i} style={{ display: 'flex', gap: '1rem' }}>
                     <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: '#1a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
@@ -642,32 +642,43 @@ const Home = () => {
           </motion.div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
-            {useCases.map((useCase, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                style={{
-                  backgroundColor: '#f0f0f0',
-                  border: '1px solid #cccccc',
-                  borderRadius: '16px',
-                  padding: '2rem',
-                  transition: 'transform 0.2s',
-                }}
-                whileHover={{ y: -4, boxShadow: '0 12px 40px rgba(0,0,0,0.08)' }}
-              >
-                <div style={{ fontSize: '2.5rem', marginBottom: '1.25rem' }}>{useCase.image}</div>
-                <h3 style={{ fontSize: '1.125rem', fontWeight: '700', color: '#1a1a1a', marginBottom: '0.75rem', letterSpacing: '-0.01em' }}>{useCase.title}</h3>
-                <p style={{ fontSize: '0.9rem', color: '#666666', lineHeight: '1.65' }}>{useCase.description}</p>
-              </motion.div>
-            ))}
+            {useCases.map((useCase, index) => {
+              const Icon = useCase.icon;
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  style={{
+                    backgroundColor: '#f0f0f0',
+                    border: '1px solid #cccccc',
+                    borderRadius: '16px',
+                    padding: '2rem',
+                    transition: 'transform 0.2s',
+                  }}
+                  whileHover={{ y: -4, boxShadow: '0 12px 40px rgba(0,0,0,0.08)' }}
+                >
+                  <div style={{
+                    width: '48px', height: '48px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    borderRadius: '12px',
+                    backgroundColor: 'rgba(249,115,22,0.1)',
+                    marginBottom: '1.25rem',
+                  }}>
+                    <Icon size={24} color="#f97316" />
+                  </div>
+                  <h3 style={{ fontSize: '1.125rem', fontWeight: '700', color: '#1a1a1a', marginBottom: '0.75rem', letterSpacing: '-0.01em' }}>{useCase.title}</h3>
+                  <p style={{ fontSize: '0.9rem', color: '#666666', lineHeight: '1.65' }}>{useCase.description}</p>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* ── CTA ───────────────────────────────────────────────── */}
+      {/* ── ARTICLE CTA ───────────────────────────────────────── */}
       <section style={{ padding: '6rem 1.5rem', backgroundColor: '#1a1a1a' }}>
         <div style={{ maxWidth: '900px', margin: '0 auto', textAlign: 'center' }}>
           <motion.div
@@ -676,43 +687,26 @@ const Home = () => {
             viewport={{ once: true }}
           >
             <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3.5rem)', fontWeight: '800', color: '#ffffff', letterSpacing: '-0.03em', textTransform: 'uppercase', marginBottom: '1.25rem' }}>
-              See It For<br />Yourself<span style={{ color: '#f97316' }}>.</span>
+              Read The<br />Full Story<span style={{ color: '#f97316' }}>.</span>
             </h2>
-            <p style={{ fontSize: '1.125rem', color: '#888888', lineHeight: '1.65', marginBottom: '2.5rem', maxWidth: '500px', margin: '0 auto 2.5rem' }}>
-              Try the live demo, or read the full article to see how far silent lip reading has come.
+            <p style={{ fontSize: '1.125rem', color: '#888888', lineHeight: '1.65', maxWidth: '500px', margin: '0 auto 2.5rem' }}>
+              Find out how the models were built, how they were trained, and what the numbers actually mean when you put them to the test.
             </p>
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Link to="/demo" style={{ textDecoration: 'none' }}>
-                <button
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '0.5rem',
-                    padding: '0.875rem 2rem', borderRadius: '8px',
-                    fontSize: '0.9375rem', fontWeight: '600',
-                    color: '#ffffff', backgroundColor: '#f97316',
-                    border: 'none', cursor: 'pointer', transition: 'background-color 0.2s',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#ea580c')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f97316')}
-                >
-                  <Play size={16} /> Try Demo Now
-                </button>
-              </Link>
-              <Link to="/article" style={{ textDecoration: 'none' }}>
-                <button
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '0.5rem',
-                    padding: '0.875rem 2rem', borderRadius: '8px',
-                    fontSize: '0.9375rem', fontWeight: '600',
-                    color: '#1a1a1a', backgroundColor: '#e8e8e8',
-                    border: 'none', cursor: 'pointer', transition: 'background-color 0.2s',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#e8e8e8')}
-                >
-                  <BookOpen size={16} /> Learn More
-                </button>
-              </Link>
-            </div>
+            <Link to="/article" style={{ textDecoration: 'none' }}>
+              <button
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                  padding: '0.875rem 2rem', borderRadius: '8px',
+                  fontSize: '0.9375rem', fontWeight: '600',
+                  color: '#ffffff', backgroundColor: '#f97316',
+                  border: 'none', cursor: 'pointer', transition: 'background-color 0.2s',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#ea580c')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f97316')}
+              >
+                <BookOpen size={16} /> Read the Article
+              </button>
+            </Link>
           </motion.div>
         </div>
       </section>

@@ -94,7 +94,7 @@ function TitleSlide() {
         <p className="text-gray-600 text-base mb-10">Final Year Project · COMSATS University Lahore · 2026</p>
 
         <div className="flex items-center justify-center gap-3 flex-wrap">
-          {['CNN + Transformer', 'Landmark Fusion', 'LRW · LRS2', 'Dual-Stream'].map((tag, i) => (
+          {['CNN + Transformer', 'Landmark Fusion', 'LRW', 'Dual-Stream'].map((tag, i) => (
             <motion.div key={tag} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 + i * 0.1 }}>
               <Badge color={['#f97316','#1a1a1a','#9333ea','#16a34a'][i]}>{tag}</Badge>
             </motion.div>
@@ -139,7 +139,7 @@ function IntroSlide() {
         className="mt-4 p-4 rounded-xl border border-purple-500/30 bg-purple-500/10"
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
       >
-        <p className="text-purple-300 text-sm leading-relaxed">
+        <p className="text-purple-600 text-sm leading-relaxed">
           <span className="font-semibold text-white">Why we chose this:</span> VSR combines CNNs for spatial feature extraction with Transformers for temporal attention modelling — making it a rich vehicle for learning core deep learning approaches and producing genuinely impactful research.
         </p>
       </motion.div>
@@ -213,7 +213,7 @@ function NoveltySlide() {
 function DatasetsSlide() {
   const rows = [
     { name: 'LRW',       type: 'Words',     size: '173 hrs', vocab: '500',  why: 'Benchmarked, manageable', chosen: true  },
-    { name: 'LRS2',      type: 'Sentences', size: '140 hrs', vocab: 'Open', why: 'Real-world complexity',   chosen: true  },
+    { name: 'LRS2',      type: 'Sentences', size: '140 hrs', vocab: 'Open', why: 'Resource-intensive',   chosen: false  },
     { name: 'GRID',      type: 'Words',     size: '34 hrs',  vocab: '51',   why: 'Too simple',              chosen: false },
     { name: 'LRS3',      type: 'Sentences', size: '439 hrs', vocab: 'Open', why: 'Not available',           chosen: false },
     { name: 'AVSpeech',  type: 'Variable',  size: '4700 hrs',vocab: 'Open', why: 'Noisy labels',            chosen: false },
@@ -258,7 +258,7 @@ function DatasetsSlide() {
                   <td className="px-5 py-3.5">
                     <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
                       row.chosen
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                        ? 'bg-emerald-500/20 text-emerald-700 border border-emerald-500/30'
                         : 'bg-white/5 text-gray-500 border border-white/10'
                     }`}>{row.why}</span>
                   </td>
@@ -270,7 +270,7 @@ function DatasetsSlide() {
       </motion.div>
 
       <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} className="mt-4 text-sm text-gray-400">
-        <span className="text-white font-semibold">Strategy:</span> Validate with LRW, then scale to LRS2 for real-world scenarios.
+        <span className="text-white font-semibold">Strategy:</span> Validate with LRW, then scale to LRS2 for real-world scenarios in the future.
       </motion.p>
     </div>
   );
@@ -311,7 +311,7 @@ function ArchitectureSlide() {
 
   function Box({ label }) {
     return (
-      <div className="px-3 py-1.5 rounded-lg border border-white/15 bg-[#111128] text-xs text-gray-200 text-center font-medium whitespace-nowrap">
+      <div className="px-3 py-1.5 rounded-lg border border-white/15 bg-[#111128]/80 text-xs text-gray-100 text-center font-medium whitespace-nowrap">
         {label}
       </div>
     );
@@ -567,7 +567,7 @@ function ScalingSlide() {
             51% accuracy on a 500-class problem using pure geometric features is significant. No prior published work reports a landmarks-only model benchmarked on the complete LRW dataset — this fills an identified research gap.
           </p>
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/30">
-            <span className="text-amber-300 text-xs font-semibold">✓ RQ2 Answered — First landmarks-only LRW benchmark</span>
+            <span className="text-amber-600 text-xs font-semibold">✓ RQ2 Answered — First landmarks-only LRW benchmark</span>
           </div>
         </div>
       </motion.div>
@@ -607,7 +607,7 @@ function AppearanceSlide() {
         initial={{ opacity: 0, scale: 0.93 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5 }}
       >
         <div className="text-center shrink-0">
-          <div className="text-7xl font-black text-indigo-400">75%</div>
+          <div className="text-7xl font-black text-indigo-600">75%</div>
           <div className="text-gray-400 text-sm mt-1">Validation Accuracy</div>
           <div className="text-gray-500 text-xs">Full LRW · 500 words</div>
         </div>
@@ -623,7 +623,7 @@ function AppearanceSlide() {
               { label: 'Single GPU trainable', color: 'indigo' },
               { label: '✓ RQ3: Lightweight model achieved', color: 'emerald' },
             ].map((c, i) => (
-              <span key={i} className={`px-3 py-1 rounded-full border border-${c.color}-500/30 bg-${c.color}-500/10 text-${c.color}-300 text-xs`}>
+              <span key={i} className={`px-3 py-1 rounded-full border border-${c.color}-500/30 bg-${c.color}-500/20 text-${c.color}-700 text-xs`}>
                 {c.label}
               </span>
             ))}
