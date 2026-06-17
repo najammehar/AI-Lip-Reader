@@ -12,26 +12,38 @@ const FileUpload = ({ onFileSelect, accept = "video/*", maxSize = 50 }) => {
     // Validate file type
     const validTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/mkv', 'video/webm'];
     if (!validTypes.includes(selectedFile.type)) {
-      setError('Please upload a valid video file (MP4, AVI, MOV, MKV, WebM)');
-      return false;
+      return 'INVALID_TYPE';
     }
 
     // Validate file size (convert MB to bytes)
     const maxSizeBytes = maxSize * 1024 * 1024;
     if (selectedFile.size > maxSizeBytes) {
-      setError(`File size must be less than ${maxSize}MB`);
-      return false;
+      return 'FILE_TOO_LARGE';
     }
 
-    setError('');
-    return true;
+    return 'VALID';
   };
 
   const handleFileChange = (selectedFile) => {
-    if (selectedFile && validateFile(selectedFile)) {
-      setFile(selectedFile);
-      onFileSelect(selectedFile);
+    if (!selectedFile) return;
+    
+    const validation = validateFile(selectedFile);
+    
+    if (validation === 'INVALID_TYPE') {
+      setFile(null);
+      setError('Please upload a valid video file (MP4, AVI, MOV, MKV, WebM)');
+      return;
     }
+    
+    if (validation === 'FILE_TOO_LARGE') {
+      setFile(null);
+      setError(`File size must be less than ${maxSize}MB`);
+      return;
+    }
+    
+    setError('');
+    setFile(selectedFile);
+    onFileSelect(selectedFile);
   };
 
   const handleDrag = (e) => {
@@ -89,10 +101,10 @@ const FileUpload = ({ onFileSelect, accept = "video/*", maxSize = 50 }) => {
         <input
           ref={fileInputRef}
           type="file"
-          accept={accept}
           onChange={(e) => handleFileChange(e.target.files[0])}
           className="hidden"
           id="file-upload"
+          data-testid="file-upload"
         />
 
         <AnimatePresence mode="wait">
@@ -143,6 +155,7 @@ const FileUpload = ({ onFileSelect, accept = "video/*", maxSize = 50 }) => {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={handleRemoveFile}
+                aria-label="Remove"
                 className="p-2 rounded hover:bg-[#181818] text-gray-400 hover:text-white transition-colors"
               >
                 <X size={20} />

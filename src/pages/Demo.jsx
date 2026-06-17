@@ -243,6 +243,10 @@ const Demo = () => {
       setStage(3);
       if (!response.ok) {
         const d = await response.json().catch(() => ({}));
+        // Handle rate limit (429) error specially
+        if (response.status === 429) {
+          throw new Error(d.detail || 'Rate limit exceeded. Maximum 3 videos per 60 seconds.');
+        }
         throw new Error(d.detail || d.error || `Server error ${response.status}`);
       }
       const data = await response.json();
