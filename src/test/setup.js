@@ -10,10 +10,9 @@ process.env.VITE_FUSION_GATED_API_URL = 'http://localhost:8000/fusion/gated'
 process.env.VITE_FUSION_CONCAT_API_URL = 'http://localhost:8000/fusion/concat'
 
 // Mock fetch globally for API calls
-global.fetch = vi.fn((url, options) => {
+global.fetch = vi.fn((url) => {
   const urlStr = typeof url === 'string' ? url : url.toString()
   
-  // Mock responses for each endpoint
   const mockResponses = {
     '/cnn': { 
       success: true,

@@ -1,4 +1,5 @@
-import { render } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 
 // Custom render function that wraps components with necessary providers
 export function renderWithProviders(
@@ -10,5 +11,4 @@ export function renderWithProviders(
   return render(ui, { ...renderOptions })
 }
 
-export * from '@testing-library/react'
-export { default as userEvent } from '@testing-library/user-event'
+export { render, screen, waitFor, within, userEvent }

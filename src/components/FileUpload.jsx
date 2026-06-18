@@ -1,8 +1,9 @@
 import { useState, useRef } from 'react';
+/* eslint-disable-next-line no-unused-vars */
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, X, FileVideo, AlertCircle } from 'lucide-react';
 
-const FileUpload = ({ onFileSelect, accept = "video/*", maxSize = 50 }) => {
+const FileUpload = ({ onFileSelect, maxSize = 50 }) => {
   const [file, setFile] = useState(null);
   const [error, setError] = useState('');
   const [dragActive, setDragActive] = useState(false);

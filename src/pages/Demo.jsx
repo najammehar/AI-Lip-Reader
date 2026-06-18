@@ -1,5 +1,6 @@
 // ─── DEMO PAGE — redesigned to match Home theme ───────────────────────────────
 import { useState, useEffect, useRef, useCallback } from 'react';
+/* eslint-disable-next-line no-unused-vars */
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, CheckCircle2, AlertCircle, Loader2, Cpu, Crosshair,
@@ -165,6 +166,8 @@ const Demo = () => {
   const [subtitleDownloading, setSubtitleDownloading] = useState(false);
   const [subtitleError,  setSubtitleError]  = useState('');
   const [isMobile,       setIsMobile]       = useState(false);
+  const abortControllerRef = useRef(null);
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -185,17 +188,29 @@ const Demo = () => {
   }, [videoUrl]);
 
   const handleModelChange = (id) => {
+    // Cancel any in-flight request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
     if (videoUrl) URL.revokeObjectURL(videoUrl);
     setSelectedModel(id); setResult(null); setError(null); setFile(null); setVideoUrl(null); setStage(0); setSelectedWord(null); setUploadKey((k) => k + 1);
     if (id !== 'fusion') setSelectedFusion('crossattn');
   };
 
   const handleFusionChange = (id) => {
+    // Cancel any in-flight request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
     if (videoUrl) URL.revokeObjectURL(videoUrl);
     setSelectedFusion(id); setResult(null); setError(null); setFile(null); setVideoUrl(null); setStage(0); setSelectedWord(null); setUploadKey((k) => k + 1);
   };
 
   const reset = () => {
+    // Cancel any in-flight request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
     if (videoUrl) URL.revokeObjectURL(videoUrl);
     setFile(null); setResult(null); setError(null); setStage(0);
     setVideoUrl(null); setUploadKey((k) => k + 1); setSelectedWord(null);
@@ -232,36 +247,96 @@ const Demo = () => {
 
   const handleProcess = async () => {
     if (!file) return;
-    setProcessing(true); setError(null); setResult(null); setStage(0); setSelectedWord(null);
+
+    // Cancel previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Generate unique request ID to track if this request is still current
+    const currentRequestId = ++requestIdRef.current;
+    
+    setProcessing(true);
+    setError(null);
+    setResult(null);
+    setStage(0);
+    setSelectedWord(null);
+
+    // Create abort controller for this request
+    abortControllerRef.current = new AbortController();
+    const timeoutId = setTimeout(() => {
+      abortControllerRef.current.abort();
+    }, 120000); // 2 minute timeout
+
     try {
       setStage(1);
       const formData = new FormData();
       formData.append('video', file);
       const activeUrl = selectedModel === 'fusion' ? activeFusion.apiUrl : model.apiUrl;
       setStage(2);
-      const response = await fetch(`${activeUrl}/predict`, { method: 'POST', body: formData });
-      setStage(3);
-      if (!response.ok) {
-        const d = await response.json().catch(() => ({}));
-        // Handle rate limit (429) error specially
-        if (response.status === 429) {
-          throw new Error(d.detail || 'Rate limit exceeded. Maximum 3 videos per 60 seconds.');
-        }
-        throw new Error(d.detail || d.error || `Server error ${response.status}`);
+
+      const response = await fetch(`${activeUrl}/predict`, {
+        method: 'POST',
+        body: formData,
+        signal: abortControllerRef.current.signal,
+      });
+
+      // Check if this request is still current (user hasn't switched models/videos)
+      if (currentRequestId !== requestIdRef.current) {
+        return;
       }
+
+      setStage(3);
+
+      if (!response.ok) {
+        let errorDetail = '';
+        try {
+          const d = await response.json();
+          errorDetail = d.detail || d.error || '';
+        } catch {
+          errorDetail = '';
+        }
+
+        if (response.status === 429) {
+          throw new Error(errorDetail || 'Rate limit exceeded. Maximum 3 videos per 60 seconds.');
+        }
+
+        throw new Error(errorDetail || `Server error ${response.status}`);
+      }
+
       const data = await response.json();
-      setStage(4); setResult(data);
+
+      // Check again if this request is still current
+      if (currentRequestId !== requestIdRef.current) {
+        return;
+      }
+
+      setStage(4);
+      setResult(data);
       setSelectedWord(data.top_prediction);
     } catch (err) {
-      const msg = err.message || '';
-      const isNetwork = msg.includes('fetch') || msg.includes('NetworkError') || msg.includes('Failed to fetch');
-      setError(
-        isNetwork
-          ? '__network__'
-          : msg || 'Prediction failed. Please try again.'
-      );
+      // Only update error if this request is still current
+      if (currentRequestId !== requestIdRef.current) {
+        return;
+      }
+
+      if (err.name === 'AbortError') {
+        setError('Request timed out. Please try again.');
+      } else {
+        const msg = err.message || '';
+        const isNetwork = msg.includes('fetch') || msg.includes('NetworkError') || msg.includes('Failed to fetch');
+        setError(
+          isNetwork
+            ? '__network__'
+            : msg || 'Prediction failed. Please try again.'
+        );
+      }
     } finally {
-      setProcessing(false);
+      clearTimeout(timeoutId);
+      // Only reset processing if this request is still current
+      if (currentRequestId === requestIdRef.current) {
+        setProcessing(false);
+      }
     }
   };
 

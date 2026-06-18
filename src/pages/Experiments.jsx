@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, X, TrendingUp, TrendingDown, Minus, FlaskConical, Layers, Brain, BarChart3, ChevronRight } from 'lucide-react';
 import Button from '../components/Button';

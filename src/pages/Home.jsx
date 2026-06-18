@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+/* eslint-disable-next-line no-unused-vars */
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Video, Zap, Globe, Play, BookOpen, CheckCircle2, Eye, ChevronDown, Camera, Film, Bot, VolumeX } from 'lucide-react';

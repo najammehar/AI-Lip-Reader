@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { Brain, Eye, Layers, Database, TrendingUp, Target, Zap, GitBranch } from 'lucide-react';
 import Card from '../components/Card';
 

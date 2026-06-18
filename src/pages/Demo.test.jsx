@@ -1,9 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderWithProviders, screen, waitFor } from '../test/utils'
+import { renderWithProviders, screen } from '../test/utils'
 import Demo from '../pages/Demo'
-
-// Mock fetch globally
-global.fetch = vi.fn()
 
 describe('Demo Page - Rate Limiting', () => {
   beforeEach(() => {

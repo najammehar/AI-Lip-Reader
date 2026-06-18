@@ -1,8 +1,63 @@
 import { useState, useEffect, useCallback } from 'react';
+/* eslint-disable-next-line no-unused-vars */
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, Brain } from 'lucide-react';
 
 const TOTAL_SLIDES = 13;
+
+/* ── Component definitions (move outside render) ────────── */
+function Cyl({ label, delay = 0 }) {
+  return (
+    <motion.div
+      className="flex flex-col items-center shrink-0"
+      initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.45, type: 'spring', stiffness: 240, damping: 20 }}
+    >
+      <svg width="52" height="68" viewBox="0 0 52 68" fill="none">
+        <rect x="2" y="12" width="48" height="44" fill="#166534" stroke="#22c55e" strokeWidth="1.5" />
+        <ellipse cx="26" cy="56" rx="24" ry="8" fill="#14532d" stroke="#22c55e" strokeWidth="1.5" />
+        <ellipse cx="26" cy="12" rx="24" ry="8" fill="#22c55e" stroke="#16a34a" strokeWidth="1.5" />
+      </svg>
+      <p className="text-xs font-semibold text-gray-300 mt-1.5 text-center leading-tight w-16">{label}</p>
+    </motion.div>
+  );
+}
+
+function Arr({ delay = 0 }) {
+  return (
+    <motion.div
+      className="flex items-center shrink-0 mx-0.5"
+      initial={{ opacity: 0, scaleX: 0 }} animate={{ opacity: 1, scaleX: 1 }}
+      transition={{ delay, duration: 0.22 }}
+      style={{ transformOrigin: 'left center' }}
+    >
+      <div style={{ width: 18, height: 1.5, background: '#6b7280' }} />
+      <div style={{ width: 0, height: 0, borderStyle: 'solid', borderWidth: '4px 0 4px 6px', borderColor: 'transparent transparent transparent #6b7280' }} />
+    </motion.div>
+  );
+}
+
+function Box({ label }) {
+  return (
+    <div className="px-3 py-1.5 rounded-lg border border-white/15 bg-[#111128]/80 text-xs text-gray-100 text-center font-medium whitespace-nowrap">
+      {label}
+    </div>
+  );
+}
+
+function Group({ title, children, bg = 'rgba(99,102,241,0.07)', border = 'rgba(99,102,241,0.22)', delay = 0 }) {
+  return (
+    <motion.div
+      className="relative rounded-xl p-2.5 pt-5 shrink-0"
+      style={{ background: bg, border: `1px solid ${border}` }}
+      initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.45, type: 'spring', stiffness: 240, damping: 20 }}
+    >
+      <span className="absolute top-1.5 left-2.5 text-[9px] font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">{title}</span>
+      {children}
+    </motion.div>
+  );
+}
 
 /* ── Pre-computed random data (avoids re-render jitter) ───────── */
 const TITLE_PARTICLES = Array.from({ length: 18 }, (_, i) => ({
@@ -278,59 +333,6 @@ function DatasetsSlide() {
 
 /* ── SLIDE 5 · Architecture ───────────────────────────────────── */
 function ArchitectureSlide() {
-  function Cyl({ label, delay = 0 }) {
-    return (
-      <motion.div
-        className="flex flex-col items-center shrink-0"
-        initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}
-        transition={{ delay, duration: 0.45, type: 'spring', stiffness: 240, damping: 20 }}
-      >
-        <svg width="52" height="68" viewBox="0 0 52 68" fill="none">
-          <rect x="2" y="12" width="48" height="44" fill="#166534" stroke="#22c55e" strokeWidth="1.5" />
-          <ellipse cx="26" cy="56" rx="24" ry="8" fill="#14532d" stroke="#22c55e" strokeWidth="1.5" />
-          <ellipse cx="26" cy="12" rx="24" ry="8" fill="#22c55e" stroke="#16a34a" strokeWidth="1.5" />
-        </svg>
-        <p className="text-xs font-semibold text-gray-300 mt-1.5 text-center leading-tight w-16">{label}</p>
-      </motion.div>
-    );
-  }
-
-  function Arr({ delay = 0 }) {
-    return (
-      <motion.div
-        className="flex items-center shrink-0 mx-0.5"
-        initial={{ opacity: 0, scaleX: 0 }} animate={{ opacity: 1, scaleX: 1 }}
-        transition={{ delay, duration: 0.22 }}
-        style={{ transformOrigin: 'left center' }}
-      >
-        <div style={{ width: 18, height: 1.5, background: '#6b7280' }} />
-        <div style={{ width: 0, height: 0, borderStyle: 'solid', borderWidth: '4px 0 4px 6px', borderColor: 'transparent transparent transparent #6b7280' }} />
-      </motion.div>
-    );
-  }
-
-  function Box({ label }) {
-    return (
-      <div className="px-3 py-1.5 rounded-lg border border-white/15 bg-[#111128]/80 text-xs text-gray-100 text-center font-medium whitespace-nowrap">
-        {label}
-      </div>
-    );
-  }
-
-  function Group({ title, children, bg = 'rgba(99,102,241,0.07)', border = 'rgba(99,102,241,0.22)', delay = 0 }) {
-    return (
-      <motion.div
-        className="relative rounded-xl p-2.5 pt-5 shrink-0"
-        style={{ background: bg, border: `1px solid ${border}` }}
-        initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}
-        transition={{ delay, duration: 0.45, type: 'spring', stiffness: 240, damping: 20 }}
-      >
-        <span className="absolute top-1.5 left-2.5 text-[9px] font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">{title}</span>
-        {children}
-      </motion.div>
-    );
-  }
-
   return (
     <div className="flex flex-col h-full px-8 py-6">
       <motion.div initial={{ opacity: 0, y: -15 }} animate={{ opacity: 1, y: 0 }} className="mb-5">
