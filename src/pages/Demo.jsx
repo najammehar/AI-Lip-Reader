@@ -12,25 +12,25 @@ const MODELS = {
     id: 'cnn', label: '3D CNN + BiLSTM',
     description: 'Trained on raw pixel frames of the mouth region (grayscale, 96×96)',
     apiUrl: import.meta.env.VITE_CNN_API_URL,
-    icon: Cpu, accent: '#f97316', accuracy: '~75%', vocab: '500 words', tag: 'Appearance',
+    icon: Cpu, accent: '#f97316', vocab: '500 words', tag: 'Appearance',
   },
   landmarks: {
     id: 'landmarks', label: 'Landmarks + Transformer',
     description: 'Uses MediaPipe to extract 50 lip/chin landmark coordinates per frame',
     apiUrl: import.meta.env.VITE_LANDMARKS_API_URL,
-    icon: Crosshair, accent: '#ea580c', accuracy: '~51%', vocab: '500 words', tag: 'Geometry',
+    icon: Crosshair, accent: '#ea580c', vocab: '500 words', tag: 'Geometry',
   },
   landmarks100: {
     id: 'landmarks100', label: 'Landmarks BiLSTM 100',
     description: 'Smaller landmark model trained on 100 LRW words — faster inference',
     apiUrl: import.meta.env.VITE_LANDMARKS_100_API_URL,
-    icon: Zap, accent: '#fb923c', accuracy: '~63%', vocab: '100 words', tag: 'Lightweight',
+    icon: Zap, accent: '#fb923c', vocab: '100 words', tag: 'Lightweight',
   },
   fusion: {
     id: 'fusion', label: 'Fusion Models',
     description: 'Combines CNN appearance + landmark geometry streams for joint prediction',
     apiUrl: null,
-    icon: Layers, accent: '#f97316', accuracy: 'Up to ~78%', vocab: '500 words', tag: 'Best',
+    icon: Layers, accent: '#f97316', vocab: '500 words', tag: 'Best',
   },
 };
 
@@ -266,7 +266,7 @@ const Demo = () => {
     abortControllerRef.current = new AbortController();
     const timeoutId = setTimeout(() => {
       abortControllerRef.current.abort();
-    }, 120000); // 2 minute timeout
+    }, 240000); // 4 minute timeout
 
     try {
       setStage(1);
@@ -429,8 +429,6 @@ const Demo = () => {
                     <p style={{ fontSize: '0.875rem', fontWeight: '700', letterSpacing: '-0.01em', lineHeight: 1.3, color: active ? '#ffffff' : '#1a1a1a', marginBottom: '0.375rem' }}>{m.label}</p>
                     <p style={{ fontSize: '0.75rem', color: active ? '#888' : '#777', lineHeight: '1.55', marginBottom: '0.875rem' }}>{m.description}</p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span style={{ fontSize: '0.8125rem', fontWeight: '700', color: m.accent }}>{m.accuracy}</span>
-                      <span style={{ width: '3px', height: '3px', borderRadius: '50%', backgroundColor: active ? '#555' : '#ccc' }} />
                       <span style={{ fontSize: '0.75rem', color: active ? '#777' : '#999' }}>{m.vocab}</span>
                     </div>
                   </motion.button>
@@ -489,8 +487,6 @@ const Demo = () => {
                   <p style={{ fontSize: '0.9rem', fontWeight: '700', color: '#ffffff', marginBottom: '0.25rem' }}>{model.label}</p>
                   <p style={{ fontSize: '0.75rem', color: '#888888', lineHeight: 1.5 }}>{model.description}</p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-                    <span style={{ fontSize: '0.8125rem', fontWeight: '700', color: model.accent }}>{model.accuracy}</span>
-                    <span style={{ width: '3px', height: '3px', borderRadius: '50%', backgroundColor: '#555' }} />
                     <span style={{ fontSize: '0.7rem', color: '#666' }}>{model.vocab}</span>
                   </div>
                 </div>

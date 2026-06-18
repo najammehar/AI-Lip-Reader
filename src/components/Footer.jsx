@@ -50,7 +50,7 @@ const Footer = () => {
           </nav>
 
           {/* Social links */}
-          <div style={{ display: 'flex', gap: '0.625rem' }}>
+          {/* <div style={{ display: 'flex', gap: '0.625rem' }}>
             {[
               { href: 'mailto:lipreader@project.ai', icon: <Mail size={15} />, label: 'Email' },
               { href: 'https://github.com', icon: <Github size={15} />, label: 'GitHub' },
@@ -73,7 +73,7 @@ const Footer = () => {
                 {icon}
               </a>
             ))}
-          </div>
+          </div> */}
         </div>
 
         {/* Bottom bar */}
