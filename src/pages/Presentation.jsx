@@ -716,7 +716,7 @@ function ScalingSlide() {
         initial={{ opacity: 0, scale: 0.93 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5 }}
       >
         <div className="text-center shrink-0">
-          <div className="text-6xl font-black text-amber-400">51%</div>
+          <div className="text-6xl font-black text-amber-400">44%</div>
           <div className="text-gray-400 text-sm mt-1">Validation Accuracy</div>
           <div className="text-gray-600 text-xs">500 words · Full LRW</div>
         </div>
@@ -724,7 +724,7 @@ function ScalingSlide() {
         <div className="space-y-2">
           <div className="text-white font-semibold">Landmarks-Only on Full LRW: First Benchmark</div>
           <p className="text-gray-400 text-sm leading-relaxed">
-            51% accuracy on a 500-class problem using pure geometric features is significant. No prior published work reports a landmarks-only model benchmarked on the complete LRW dataset. This fills an identified research gap.
+            44% accuracy on a 500-class problem using pure geometric features is significant. No prior published work reports a landmarks-only model benchmarked on the complete LRW dataset. This fills an identified research gap.
           </p>
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/30">
             <span className="text-amber-600 text-xs font-semibold">✓ RQ2 Answered. First landmarks-only LRW benchmark</span>
@@ -916,9 +916,9 @@ function ClosingSlide() {
 
       <motion.div initial={{ opacity: 0, y: 35 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="relative z-10 max-w-2xl">
         <Quote size={32} className="text-orange-500 mx-auto mb-5" />
-        <p className="text-2xl md:text-3xl font-bold mb-8 leading-snug" style={{ color: '#1a1a1a' }}>
+        {/* <p className="text-2xl md:text-3xl font-bold mb-8 leading-snug" style={{ color: '#1a1a1a' }}>
           We did not build a perfect lip reader. We built an experiment that tells you exactly what it will take to build one.
-        </p>
+        </p> */}
 
         <h1 className="text-7xl font-black mb-4 leading-none" style={{ color: '#1a1a1a' }}>Thank You</h1>
         <p className="text-gray-400 text-xl mb-2">LipReader.AI — Dual-Stream Visual Speech Recognition</p>
@@ -991,18 +991,25 @@ function AblationTimelineSlide() {
 /* ═══════════════════════════════════════════════════════════════
    Slide registry
    ═══════════════════════════════════════════════════════════════ */
+// const SLIDE_COMPONENTS = [
+//   TitleSlide, ProblemSlide, WhyMattersSlide,
+//   LiteratureSlide, NoveltySlide, ArchitectureSlide, DatasetsSlide,
+//   ValidationSlide, BaselinesSlide, ScalingSlide, AppearanceSlide, FusionSlide, FindingsSlide,
+//   ClosingSlide, AppendixDividerSlide, AblationTimelineSlide,
+// ];
+
+// ═══════ */
 const SLIDE_COMPONENTS = [
   TitleSlide, ProblemSlide, WhyMattersSlide,
   LiteratureSlide, NoveltySlide, ArchitectureSlide, DatasetsSlide,
   ValidationSlide, BaselinesSlide, ScalingSlide, AppearanceSlide, FusionSlide, FindingsSlide,
-  ClosingSlide, AppendixDividerSlide, AblationTimelineSlide,
+  ClosingSlide
 ];
-
 const SLIDE_TITLES = [
   'Title', 'The Problem', 'Why This Matters',
   'Literature', 'Novelty', 'Architecture', 'Datasets',
   'Validation', 'Baselines', 'Scaling', 'Appearance', 'Fusion', 'Findings',
-  'Thank You', 'Appendix', 'Ablation',
+  'Thank You'
 ];
 
 const TOTAL_SLIDES = SLIDE_COMPONENTS.length;
